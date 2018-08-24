@@ -5,7 +5,7 @@ This plug-in adds the ability to export [Universal Scene
 Description](http://openusd.org/docs/index.html) files from [SketchUp
 Pro](https://www.sketchup.com). It has been tested with SketchUp Pro 2016, 2017 and 2018.
 
-It adds three options to the File->Export->3D Model menu:
+It adds three options to the **File**->**Export**->**3D Model** menu:
 
 - Pixar USD binary File (*.usd)
 - Pixar USD ASCII File (*.usda)
@@ -52,9 +52,9 @@ Dependencies
 | ---- | ------- |
 | [macOS](https://www.apple.com/mac/) | 10.13 or higher | 
 | [SketchUp Pro](https://www.sketchup.com/download/all) | 2016 or higher | 
-| [Xcode](developer.apple.com) | 9 or higher |
+| [Xcode](https://developer.apple.com) | 9 or higher |
 | [SketchUp SDK](https://extensions.sketchup.com/en/developer_center/sketchup_sdk) | recent|
-| [USD](https://extensions.sketchup.com/en/developer_center/sketchup_sdk) | 18.09 or higher |
+| [USD](https://github.com/PixarAnimationStudios/USD) | 18.09 or higher |
 
 Getting and Building the Code
 -----------------------------
