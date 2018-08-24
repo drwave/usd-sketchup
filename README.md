@@ -18,7 +18,7 @@ other.
 
 The [**usdz**](https://graphics.pixar.com/usd/docs/Usdz-File-Format-Specification.html) files this exporter writes out take care to write out in a way that is compatible with Apple's [ARKit 2](https://developer.apple.com/arkit/), which is more constrained than the general specification, but that support can be toggled on or off programmatically.
 
-The exporter also leverages the new [UsdPreviewSurface](https://graphics.pixar.com/usd/docs/UsdPreviewSurface-Proposal.html) to support texture support from SketchUp.
+The exporter also leverages the new [UsdPreviewSurface](https://graphics.pixar.com/usd/docs/UsdPreviewSurface-Proposal.html) to support texture export from SketchUp.
 
 
 Getting Help
