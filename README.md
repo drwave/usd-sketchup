@@ -16,6 +16,11 @@ There are also options on the export panel to conditionally export
 the USD as a **single file** or as a **set of files** that reference each
 other.
 
+The [**usdz**](https://graphics.pixar.com/usd/docs/Usdz-File-Format-Specification.html) files this exporter writes out take care to write out in a way that is compatible with Apple's [ARKit 2](https://developer.apple.com/arkit/), which is more constrained than the general specification, but that support can be toggled on or off programmatically.
+
+The exporter also leverages the new [UsdPreviewSurface](https://graphics.pixar.com/usd/docs/UsdPreviewSurface-Proposal.html) to support texture support from SketchUp.
+
+
 Getting Help
 ------------
 
@@ -75,11 +80,7 @@ Cloning into 'USD'...
 ##### MacOS:
 
 In a terminal, run ```xcode-select``` to ensure command line developer tools are 
-installed. Then run the script.
-
-For example, the following will download, build, and install USD's
-dependencies, then build and install the minimal configuration of USD
-for this plug-in into ```/opt/local/USDNoPythonNoImaging```.
+installed. Then run the script. We recommend building without Python, without imaging, and as a monolithic library. The Xcode project assumes that it has been built that way and installed into ```/opt/local/USDNoPythonNoImagingMonolithic```.
 
 ```
 > python USD/build_scripts/build_usd.py --no-python --no-imaging --build-monolithic /opt/local/USDNoPythonNoImagingMonolithic
@@ -107,6 +108,18 @@ At the top level of the repository, make a link to the SketchUp SDK you installe
 Launch Xcode on the project file. You may need to fix up various things in the Xcode file that are specific to your build if you have changed them (i.e. installed USD in a different location, have a different version of SketchUp installed, etc.).
 
 You will almost certainly have to update the **Development Team** in the Build Settings (**need a screenshot here**).
+
+The Xcode project assumes that you are building for SketchUp Pro 2018, and building the target will actually copy the resulting ```USDExporter.plugin``` into SketchUp Pro's app bundle in the PlugIns directory, i.e. ```/Applications/SketchUp\ 2018/SketchUp.app/Contents/PlugIns/```.
+
+Initially, that directory will probably not be writable on your machine, so you may want to make it writable:
+
+```
+> sudo chmod a+w /Applications/SketchUp\ 2018/SketchUp.app/Contents/PlugIns/
+```
+
+Copying the plug-in to the directory makes it very easy to debug the plug-in, as you can launch SketchUp Pro from inside of Xcode, set breakpoints in your plug-in, etc. Very handy when doing development.
+
+
 
 
 
