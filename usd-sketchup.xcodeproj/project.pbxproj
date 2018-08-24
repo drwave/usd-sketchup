@@ -6,9 +6,54 @@
 	objectVersion = 50;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		4052B65B212F6F76002B6746 /* USDExporter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4052B65A212F6F76002B6746 /* USDExporter.cpp */; };
+		4052B662212F6F81002B6746 /* USDSketchUpMacUI.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4052B65E212F6F81002B6746 /* USDSketchUpMacUI.xib */; };
+		4052B664212F6F81002B6746 /* SUToUSDPlugin.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4052B660212F6F81002B6746 /* SUToUSDPlugin.mm */; };
+		4052B66A212F6F9D002B6746 /* USDTextureHelper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4052B667212F6F9D002B6746 /* USDTextureHelper.cpp */; };
+		4052B66B212F6F9D002B6746 /* USDSketchUpUtilities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4052B668212F6F9D002B6746 /* USDSketchUpUtilities.cpp */; };
+		40E8C3122130833F00217059 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 40E8C3112130833F00217059 /* Cocoa.framework */; };
+		40E8C3142130835000217059 /* SketchUpAPI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 40E8C3132130835000217059 /* SketchUpAPI.framework */; };
+		40E8C3162130836E00217059 /* libtbb.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 40E8C3152130836E00217059 /* libtbb.dylib */; };
+		40E8C3182130837300217059 /* libusd_ms.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 40E8C3172130837300217059 /* libusd_ms.dylib */; };
+		40E8C31A2130899400217059 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 40E8C3192130899400217059 /* Info.plist */; };
+		40E8C31D21308A8B00217059 /* libusd_ms.dylib in Copy USD libraries to plug-in bundle's Frameworks directory */ = {isa = PBXBuildFile; fileRef = 40E8C3172130837300217059 /* libusd_ms.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		40E8C31E21308A8D00217059 /* libtbb.dylib in Copy USD libraries to plug-in bundle's Frameworks directory */ = {isa = PBXBuildFile; fileRef = 40E8C3152130836E00217059 /* libtbb.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		40E8C322213091F900217059 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 40E8C321213091F900217059 /* README.md */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		40E8C31C21308A7D00217059 /* Copy USD libraries to plug-in bundle's Frameworks directory */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				40E8C31D21308A8B00217059 /* libusd_ms.dylib in Copy USD libraries to plug-in bundle's Frameworks directory */,
+				40E8C31E21308A8D00217059 /* libtbb.dylib in Copy USD libraries to plug-in bundle's Frameworks directory */,
+			);
+			name = "Copy USD libraries to plug-in bundle's Frameworks directory";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
-		4052B650212F6EAC002B6746 /* usd-sketchup.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "usd-sketchup.bundle"; sourceTree = BUILT_PRODUCTS_DIR; };
-		4052B653212F6EAC002B6746 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		4052B650212F6EAC002B6746 /* USDExporter.plugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = USDExporter.plugin; sourceTree = BUILT_PRODUCTS_DIR; };
+		4052B659212F6F70002B6746 /* USDExporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = USDExporter.h; sourceTree = "<group>"; };
+		4052B65A212F6F76002B6746 /* USDExporter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = USDExporter.cpp; sourceTree = "<group>"; };
+		4052B65D212F6F81002B6746 /* SUToUSDPlugin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SUToUSDPlugin.h; sourceTree = "<group>"; };
+		4052B65E212F6F81002B6746 /* USDSketchUpMacUI.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = USDSketchUpMacUI.xib; sourceTree = "<group>"; };
+		4052B660212F6F81002B6746 /* SUToUSDPlugin.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SUToUSDPlugin.mm; sourceTree = "<group>"; };
+		4052B666212F6F9D002B6746 /* USDTextureHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = USDTextureHelper.h; sourceTree = "<group>"; };
+		4052B667212F6F9D002B6746 /* USDTextureHelper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = USDTextureHelper.cpp; sourceTree = "<group>"; };
+		4052B668212F6F9D002B6746 /* USDSketchUpUtilities.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = USDSketchUpUtilities.cpp; sourceTree = "<group>"; };
+		4052B669212F6F9D002B6746 /* USDSketchUpUtilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = USDSketchUpUtilities.h; sourceTree = "<group>"; };
+		40E8C3112130833F00217059 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
+		40E8C3132130835000217059 /* SketchUpAPI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SketchUpAPI.framework; path = "../../SketchUpSDKs/SDK_Mac_18-0-18665/SketchUpAPI.framework"; sourceTree = "<group>"; };
+		40E8C3152130836E00217059 /* libtbb.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libtbb.dylib; path = ../../../../opt/local/USDNoPythonNoImagingMonolithic/lib/libtbb.dylib; sourceTree = "<group>"; };
+		40E8C3172130837300217059 /* libusd_ms.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libusd_ms.dylib; path = ../../../../opt/local/USDNoPythonNoImagingMonolithic/lib/libusd_ms.dylib; sourceTree = "<group>"; };
+		40E8C3192130899400217059 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		40E8C321213091F900217059 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -16,6 +61,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				40E8C3122130833F00217059 /* Cocoa.framework in Frameworks */,
+				40E8C3142130835000217059 /* SketchUpAPI.framework in Frameworks */,
+				40E8C3162130836E00217059 /* libtbb.dylib in Frameworks */,
+				40E8C3182130837300217059 /* libusd_ms.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -25,15 +74,17 @@
 		4052B647212F6EAC002B6746 = {
 			isa = PBXGroup;
 			children = (
+				40E8C321213091F900217059 /* README.md */,
 				4052B652212F6EAC002B6746 /* usd-sketchup */,
 				4052B651212F6EAC002B6746 /* Products */,
+				40E8C3102130833E00217059 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
 		4052B651212F6EAC002B6746 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				4052B650212F6EAC002B6746 /* usd-sketchup.bundle */,
+				4052B650212F6EAC002B6746 /* USDExporter.plugin */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -41,29 +92,61 @@
 		4052B652212F6EAC002B6746 /* usd-sketchup */ = {
 			isa = PBXGroup;
 			children = (
-				4052B653212F6EAC002B6746 /* Info.plist */,
+				40E8C3192130899400217059 /* Info.plist */,
+				4052B659212F6F70002B6746 /* USDExporter.h */,
+				4052B65A212F6F76002B6746 /* USDExporter.cpp */,
+				4052B668212F6F9D002B6746 /* USDSketchUpUtilities.cpp */,
+				4052B669212F6F9D002B6746 /* USDSketchUpUtilities.h */,
+				4052B667212F6F9D002B6746 /* USDTextureHelper.cpp */,
+				4052B666212F6F9D002B6746 /* USDTextureHelper.h */,
+				4052B65C212F6F81002B6746 /* USD_SketchUp_Mac */,
 			);
 			path = "usd-sketchup";
+			sourceTree = "<group>";
+		};
+		4052B65C212F6F81002B6746 /* USD_SketchUp_Mac */ = {
+			isa = PBXGroup;
+			children = (
+				4052B65E212F6F81002B6746 /* USDSketchUpMacUI.xib */,
+				4052B65D212F6F81002B6746 /* SUToUSDPlugin.h */,
+				4052B660212F6F81002B6746 /* SUToUSDPlugin.mm */,
+			);
+			path = USD_SketchUp_Mac;
+			sourceTree = "<group>";
+		};
+		40E8C3102130833E00217059 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				40E8C3172130837300217059 /* libusd_ms.dylib */,
+				40E8C3152130836E00217059 /* libtbb.dylib */,
+				40E8C3132130835000217059 /* SketchUpAPI.framework */,
+				40E8C3112130833F00217059 /* Cocoa.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		4052B64F212F6EAC002B6746 /* usd-sketchup */ = {
+		4052B64F212F6EAC002B6746 /* USDExporter */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 4052B656212F6EAC002B6746 /* Build configuration list for PBXNativeTarget "usd-sketchup" */;
+			buildConfigurationList = 4052B656212F6EAC002B6746 /* Build configuration list for PBXNativeTarget "USDExporter" */;
 			buildPhases = (
 				4052B64C212F6EAC002B6746 /* Sources */,
 				4052B64D212F6EAC002B6746 /* Frameworks */,
 				4052B64E212F6EAC002B6746 /* Resources */,
+				40E8C31B21308A2600217059 /* Copy USD plugin info to plug-in bundle */,
+				40E8C31C21308A7D00217059 /* Copy USD libraries to plug-in bundle's Frameworks directory */,
+				40E8C31F21308AAD00217059 /* Rewrite paths in plug-in to refer to SDK framework in app and USD libraries in the plug-in bundle */,
+				40E8C32021308AC900217059 /* Copy PlugIn Bundle to SketchUp 2018 */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			name = "usd-sketchup";
+			name = USDExporter;
 			productName = "usd-sketchup";
-			productReference = 4052B650212F6EAC002B6746 /* usd-sketchup.bundle */;
+			productReference = 4052B650212F6EAC002B6746 /* USDExporter.plugin */;
 			productType = "com.apple.product-type.bundle";
 		};
 /* End PBXNativeTarget section */
@@ -92,7 +175,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				4052B64F212F6EAC002B6746 /* usd-sketchup */,
+				4052B64F212F6EAC002B6746 /* USDExporter */,
 			);
 		};
 /* End PBXProject section */
@@ -102,16 +185,71 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				40E8C322213091F900217059 /* README.md in Resources */,
+				4052B662212F6F81002B6746 /* USDSketchUpMacUI.xib in Resources */,
+				40E8C31A2130899400217059 /* Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		40E8C31B21308A2600217059 /* Copy USD plugin info to plug-in bundle */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy USD plugin info to plug-in bundle";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "libDir=\"/opt/local/USDNoPythonNoImagingMonolithic/lib\"\nresources=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Resources\"\necho \"cp -rf ${libDir}/usd $resources\"\ncp -rf ${libDir}/usd $resources\n";
+			showEnvVarsInLog = 0;
+		};
+		40E8C31F21308AAD00217059 /* Rewrite paths in plug-in to refer to SDK framework in app and USD libraries in the plug-in bundle */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Rewrite paths in plug-in to refer to SDK framework in app and USD libraries in the plug-in bundle";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "plugIn=\"${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}\"\n# rewrite tbb reference in plug-in\ntbb=libtbb.dylib\nold=@rpath/${tbb}\nnew=@loader_path/../Frameworks/${tbb}\necho \"/usr/bin/install_name_tool -change $old $new $plugIn\" /usr/bin/install_name_tool -change $old $new $plugIn\n\n# rewrite tbb reference in usd dylib\nframeworks=\"${BUILT_PRODUCTS_DIR}/${FRAMEWORKS_FOLDER_PATH}\"\ndst=${frameworks}/libusd_ms.dylib\necho \"/usr/bin/install_name_tool -change $old $new $dst\"\n/usr/bin/install_name_tool -change $old $new $dst\n\n# rewrite usd reference in plugin\nusd=libusd_ms.dylib\nold=@rpath/${usd}\nnew=@loader_path/../Frameworks/${usd}\necho \"/usr/bin/install_name_tool -change $old $new $plugIn\"\n/usr/bin/install_name_tool -change $old $new $plugIn\n";
+			showEnvVarsInLog = 0;
+		};
+		40E8C32021308AC900217059 /* Copy PlugIn Bundle to SketchUp 2018 */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy PlugIn Bundle to SketchUp 2018";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cp -rf $BUILT_PRODUCTS_DIR/${WRAPPER_NAME} /Applications/SketchUp\\ 2018/SketchUp.app/Contents/PlugIns/\necho \"copied file to SketchUp 2018\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		4052B64C212F6EAC002B6746 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4052B66B212F6F9D002B6746 /* USDSketchUpUtilities.cpp in Sources */,
+				4052B65B212F6F76002B6746 /* USDExporter.cpp in Sources */,
+				4052B66A212F6F9D002B6746 /* USDTextureHelper.cpp in Sources */,
+				4052B664212F6F81002B6746 /* SUToUSDPlugin.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -124,18 +262,18 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_COMMA = NO;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = NO;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
@@ -150,11 +288,15 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/SDK_Mac",
+					"\"/Applications/SketchUp\\ 2018/SketchUp.app/Contents/Frameworks/\"",
+				);
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -169,7 +311,16 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/SDK_Mac/SketchUpAPI.framework/Headers",
+					/opt/local/USDNoPythonNoImagingMonolithic/include,
+				);
+				LD_RUNPATH_SEARCH_PATHS = (
+					/opt/local/USDNoPythonNoImagingMonolithic/lib,
+					"\"/Applications/SketchUp\\ 2018/SketchUp.app/Contents/Frameworks/\"",
+				);
+				LIBRARY_SEARCH_PATHS = /opt/local/USDNoPythonNoImagingMonolithic/lib;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -183,18 +334,18 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_COMMA = NO;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = NO;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
@@ -209,11 +360,15 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/SDK_Mac",
+					"\"/Applications/SketchUp\\ 2018/SketchUp.app/Contents/Frameworks/\"",
+				);
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -222,7 +377,16 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/SDK_Mac/SketchUpAPI.framework/Headers",
+					/opt/local/USDNoPythonNoImagingMonolithic/include,
+				);
+				LD_RUNPATH_SEARCH_PATHS = (
+					/opt/local/USDNoPythonNoImagingMonolithic/lib,
+					"\"/Applications/SketchUp\\ 2018/SketchUp.app/Contents/Frameworks/\"",
+				);
+				LIBRARY_SEARCH_PATHS = /opt/local/USDNoPythonNoImagingMonolithic/lib;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
@@ -232,30 +396,34 @@
 		4052B657212F6EAC002B6746 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = QS29RJP6TK;
+				HEADER_SEARCH_PATHS = "${inherited}";
 				INFOPLIST_FILE = "usd-sketchup/Info.plist";
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.pixar.usd-sketchup";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				INSTALL_PATH = "\"/Applications/SketchUp\\ 2018/SketchUp.app/Contents/PlugIns/\"";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.sketchup.exporters.usd-sketchup";
+				PRODUCT_NAME = USDExporter;
 				SKIP_INSTALL = YES;
-				WRAPPER_EXTENSION = bundle;
+				WRAPPER_EXTENSION = plugin;
 			};
 			name = Debug;
 		};
 		4052B658212F6EAC002B6746 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = QS29RJP6TK;
+				HEADER_SEARCH_PATHS = "${inherited}";
 				INFOPLIST_FILE = "usd-sketchup/Info.plist";
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.pixar.usd-sketchup";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				INSTALL_PATH = "\"/Applications/SketchUp\\ 2018/SketchUp.app/Contents/PlugIns/\"";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.sketchup.exporters.usd-sketchup";
+				PRODUCT_NAME = USDExporter;
 				SKIP_INSTALL = YES;
-				WRAPPER_EXTENSION = bundle;
+				WRAPPER_EXTENSION = plugin;
 			};
 			name = Release;
 		};
@@ -271,7 +439,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		4052B656212F6EAC002B6746 /* Build configuration list for PBXNativeTarget "usd-sketchup" */ = {
+		4052B656212F6EAC002B6746 /* Build configuration list for PBXNativeTarget "USDExporter" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				4052B657212F6EAC002B6746 /* Debug */,
