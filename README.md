@@ -59,7 +59,7 @@ Dependencies
 Getting the Prebuilt Plugin
 ------------------------------
 
-We are providing a pre-built version of the plug-in [here] *how do I put a link to it?*. After downloading, you'll want to copy it into the **PlugIns** directory inside the SketchUp Pro app bundle.  You can do this from the Terminal by the following. Note you will need to type an admin password, as that directory is probably write-protected.
+We are providing a pre-built version of the plug-in [here](https://github.com/drwave/usd-sketchup/blob/master/USDExporter.plugin.zip). After downloading, you'll want to copy it into the **PlugIns** directory inside the SketchUp Pro app bundle.  You can do this from the Terminal by the following. Note you will need to type an admin password, as that directory is probably write-protected.
 
 ```
 > sudo cp -rf USDExporter.plugin /Applications/SketchUp\ 2018/SketchUp.app/Contents/PlugIns/
