@@ -52,9 +52,20 @@ Dependencies
 | ---- | ------- |
 | [macOS](https://www.apple.com/mac/) | 10.13 or higher | 
 | [SketchUp Pro](https://www.sketchup.com/download/all) | 2016 or higher | 
-| [Xcode](https://developer.apple.com) | 9 or higher |
+| [Xcode](https://developer.apple.com/xcode) | 9 or higher |
 | [SketchUp SDK](https://extensions.sketchup.com/en/developer_center/sketchup_sdk) | recent|
 | [USD](https://github.com/PixarAnimationStudios/USD) | 18.09 or higher |
+
+Getting the Prebuilt Plugin
+------------------------------
+
+We are providing a pre-built version of the plug-in [here] *how do I put a link to it?*. After downloading, you'll want to copy it into the **PlugIns** directory inside the SketchUp Pro app bundle.  You can do this from the Terminal by the following. Note you will need to type an admin password, as that directory is probably write-protected.
+
+```
+> sudo cp -rf USDExporter.plugin /Applications/SketchUp\ 2018/SketchUp.app/Contents/PlugIns/
+```
+Once you have copied it there, you should see the 3 USD export options under the **File**->**Export**->**3D Model** menu.
+
 
 Getting and Building the Code
 -----------------------------
@@ -62,9 +73,9 @@ Getting and Building the Code
 
 #### 1. Install prerequisites (see [Dependencies](#dependencies) for required versions)
 
-Note: to build this plug-in you will need a [Trimble account](http://identity.trimble.com) and an [Apple Developer account](https://developer.apple.com/account/).
+Note: to build this plug-in you will need a [SketchUp Developer/Trimble account](https://developer.sketchup.com/en) and an [Apple Developer account](https://developer.apple.com/account/).
 
-The rest of these instructions assume you have a [Mac](https://www.apple.com/mac/) with [Xcode](developer.apple.com) and [SketchUp Pro](https://www.sketchup.com/download/all) installed.
+The rest of these instructions assume you have a [Mac](https://www.apple.com/mac/) with [Xcode](https://developer.apple.com/xcode) and [SketchUp Pro](https://www.sketchup.com/download/all) installed.
 
 #### 2. Download the USD source code
 
