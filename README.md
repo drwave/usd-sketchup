@@ -16,9 +16,19 @@ There are also options on the export panel to conditionally export
 the USD as a **single file** or as a **set of files** that reference each
 other.
 
-The [**usdz**](https://graphics.pixar.com/usd/docs/Usdz-File-Format-Specification.html) files this exporter writes out take care to write out in a way that is compatible with Apple's [ARKit 2](https://developer.apple.com/arkit/), which is more constrained than the general specification, but that support can be toggled on or off programmatically.
+The [**usdz**](https://graphics.pixar.com/usd/docs/Usdz-File-Format-Specification.html) files this exporter writes out takes care to write out in a way that is compatible with Apple's [ARKit 2](https://developer.apple.com/arkit/), which is more constrained than the general  [**usdz** specification](https://graphics.pixar.com/usd/docs/Usdz-File-Format-Specification.html), but that support can be toggled on or off programmatically.
 
 The exporter also leverages the new [UsdPreviewSurface](https://graphics.pixar.com/usd/docs/UsdPreviewSurface-Proposal.html) to support texture export from SketchUp.
+
+Getting the Prebuilt Plugin for macOS
+------------------------------
+
+We are providing a pre-built version of the plug-in [here](https://github.com/drwave/usd-sketchup/blob/master/USDExporter.plugin.zip). After downloading, you'll want to copy it into the **PlugIns** directory inside the SketchUp Pro app bundle.  You can do this from the Terminal by the following. Note you will need to type an admin password, as that directory is probably write-protected.
+
+```
+> sudo cp -rf USDExporter.plugin /Applications/SketchUp\ 2018/SketchUp.app/Contents/PlugIns/
+```
+Once you have copied it there, you should see the 3 USD export options under the **File**->**Export**->**3D Model** menu.
 
 
 Getting Help
@@ -56,16 +66,6 @@ Dependencies
 | [SketchUp SDK](https://extensions.sketchup.com/en/developer_center/sketchup_sdk) | recent|
 | [USD](https://github.com/PixarAnimationStudios/USD) | 18.09 or higher |
 
-Getting the Prebuilt Plugin
-------------------------------
-
-We are providing a pre-built version of the plug-in [here](https://github.com/drwave/usd-sketchup/blob/master/USDExporter.plugin.zip). After downloading, you'll want to copy it into the **PlugIns** directory inside the SketchUp Pro app bundle.  You can do this from the Terminal by the following. Note you will need to type an admin password, as that directory is probably write-protected.
-
-```
-> sudo cp -rf USDExporter.plugin /Applications/SketchUp\ 2018/SketchUp.app/Contents/PlugIns/
-```
-Once you have copied it there, you should see the 3 USD export options under the **File**->**Export**->**3D Model** menu.
-
 
 Getting and Building the Code
 -----------------------------
@@ -91,7 +91,7 @@ Cloning into 'USD'...
 ##### MacOS:
 
 In a terminal, run ```xcode-select``` to ensure command line developer tools are 
-installed. Then run the script. We recommend building without Python, without imaging, and as a monolithic library. The Xcode project assumes that it has been built that way and installed into ```/opt/local/USDNoPythonNoImagingMonolithic```.
+installed. Then run the script. We recommend building without Python, without imaging, and as a monolithic library. The included Xcode project assumes that it has been built that way and installed into ```/opt/local/USDNoPythonNoImagingMonolithic```.
 
 ```
 > python USD/build_scripts/build_usd.py --no-python --no-imaging --build-monolithic /opt/local/USDNoPythonNoImagingMonolithic
@@ -99,7 +99,7 @@ installed. Then run the script. We recommend building without Python, without im
 
 #### 3. Download the SketchUp SDK
 
-Once you login to the Trimble/SketchUp developer account, download the [SDK](https://extensions.sketchup.com/en/developer_center/sketchup_sdk). Unzip and install this somewhere on your machine, for example, ```~/SketchUpSDKs/SDK_Mac_18-0-18665```
+Once you login to the [Trimble/SketchUp developer account](https://extensions.sketchup.com/en/developer_center/sketchup_sdk) (*look in upper right corner*), download the [SDK](https://extensions.sketchup.com/en/developer_center/sketchup_sdk). Unzip and install this somewhere on your machine, for example, ```~/SketchUpSDKs/SDK_Mac_18-0-18665```
 
 #### 3. Download the USD SketchUp exporter plug-in source code
 
@@ -109,14 +109,14 @@ You can download source code archives from [GitHub](https://www.github.com/drwav
 > git clone https://github.com/drwave/usd-sketchup
 Cloning into 'usd-sketchup'...
 ```
-At the top level of the repository, make a link to the SketchUp SDK you installed. For example:
+At the top level of the repository, make a link to the SketchUp SDK you installed. For example, if the SDK you downloaded was ```SDK_Mac_18-0-18665``` and you put it in a subdirectory off your home directory called ```SketchUpSDKs```, you would do:
 
 ```
 > cd usd-sketchup
 > ln -s ~/SketchUpSDKs/SDK_Mac_18-0-18665 SDK_Mac
 ```
 
-Launch Xcode on the project file. You may need to fix up various things in the Xcode file that are specific to your build if you have changed them (i.e. installed USD in a different location, have a different version of SketchUp installed, etc.).
+Launch Xcode on the [project file](https://github.com/drwave/usd-sketchup/tree/master/usd-sketchup.xcodeproj). You may need to fix up various things in the Xcode file that are specific to your build if you have changed them (i.e. installed USD in a different location, have a different version of SketchUp installed, etc.).
 
 You will almost certainly have to update the **Development Team** in the Build Settings (**need a screenshot here**).
 
@@ -130,7 +130,16 @@ Initially, that directory will probably not be writable on your machine, so you 
 
 Copying the plug-in to the directory makes it very easy to debug the plug-in, as you can launch SketchUp Pro from inside of Xcode, set breakpoints in your plug-in, etc. Very handy when doing development.
 
+Missing Features
+------------
+Currently, the biggest missing feature from this exporter is the ability to handle meshes that have multiple materials on them. Our in-house experience of SketchUp Pro is that our users don't tend to create files like this, but looking around on 3D Warehouse, we see a lot of examples of this.
 
 
+Contributing
+------------
+
+If you'd like to contribute to this USD plug-in (and we appreciate the help!), please see
+the [Contributing](http://openusd.org/docs/Contributing-to-USD.html) page in the
+documentation for more information.
 
 
