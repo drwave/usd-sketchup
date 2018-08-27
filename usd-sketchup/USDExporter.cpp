@@ -864,9 +864,9 @@ USDExporter::_ExportMaterial(const pxr::SdfPath path,
     s3Schema.CreateInput(pxr::TfToken("file"),
                          pxr::SdfValueTypeNames->Asset).Set(relativePath);
     s3Schema.CreateInput(pxr::TfToken("wrapS"),
-                         pxr::SdfValueTypeNames->Token).Set(pxr::TfToken("clamp"));
+                         pxr::SdfValueTypeNames->Token).Set(pxr::TfToken("repeat"));
     s3Schema.CreateInput(pxr::TfToken("wrapT"),
-                         pxr::SdfValueTypeNames->Token).Set(pxr::TfToken("clamp"));
+                         pxr::SdfValueTypeNames->Token).Set(pxr::TfToken("repeat"));
     auto st = s3Schema.CreateInput(pxr::TfToken("st"),
                                    pxr::SdfValueTypeNames->Float2);
     st.ConnectToSource(result);
