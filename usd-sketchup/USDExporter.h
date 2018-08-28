@@ -51,6 +51,25 @@
 #include "pxr/usd/usdGeom/mesh.h"
 #include "pxr/usd/usdGeom/xform.h"
 
+class MeshSubset {
+public:
+    MeshSubset(std::string materialTextureName,
+               pxr::VtArray<int> faceVertexIndices);
+    ~MeshSubset();
+    //MeshSubset(const MeshSubset&) = delete;
+    
+    const std::string GetMaterialTextureName();
+    const pxr::VtArray<int> GetFaceVertexIndices();
+    pxr::SdfPath GetMaterialPath();
+    void SetMaterialPath(pxr::SdfPath path);
+    
+private:
+    std::string _materialTextureName;
+    pxr::VtArray<int> _faceVertexIndices;
+    pxr::SdfPath _materialPath;
+};
+
+
 class USDExporter {
 
 public:    
@@ -142,14 +161,22 @@ private:
     std::map<std::string, std::string> _textureNameSafeNameMap;
     std::map<std::string, std::string> _originalComponentNameSafeNameDictionary;
     std::map<std::string, int> _instanceCountPerClass;
-    std::vector<SUComponentInstanceRef> instances;
+    std::vector<SUComponentInstanceRef> instances; // wave: this should start with _, right?
    
     pxr::VtArray<pxr::GfVec3f> _points;
     pxr::VtArray<pxr::GfVec3f> _vertexNormals;
     pxr::VtArray<pxr::GfVec3f> _vertexFlippedNormals;
     pxr::VtArray<int> _faceVertexCounts;
     pxr::VtArray<int> _flattenedFaceVertexIndices;
-
+    // SketchUp allows multiple materials per mesh, so in order to accomodate
+    // that, we need to use USD's UsdGeomSubset API. We use these variables
+    // to hold the indices front and back material names and indices for
+    // each mesh as its being constructed. Note that the points, uvs, display
+    // color and opacity are all pan-mesh, so we don't need to track them.
+    // This is only for material assignment
+    std::vector<MeshSubset> _meshFrontFaceSubsets;
+    std::vector<MeshSubset> _meshBackFaceSubsets;
+    
     bool _hasFrontFaceMaterial;
     std::string _frontFaceTextureName;
     pxr::VtArray<pxr::GfVec2f> _frontUVs;
@@ -226,7 +253,8 @@ private:
     std::string _textureFileName(SUTextureRef textureRef);
     bool _addFrontFaceMaterial(SUFaceRef face);
     bool _addBackFaceMaterial(SUFaceRef face);
-    void _exportMesh(pxr::SdfPath path, pxr::SdfPath materialPath,
+    void _exportMesh(pxr::SdfPath path,
+                     std::vector<MeshSubset> _meshSubsets,
                      pxr::TfToken const orientation,
                      pxr::VtArray<pxr::GfVec3f>& rgb, pxr::VtArray<float>& a,
                      pxr::VtArray<pxr::GfVec2f>& uv,

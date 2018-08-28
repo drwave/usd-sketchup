@@ -50,6 +50,7 @@
 #include "pxr/usd/usdGeom/metrics.h"
 #include "pxr/usd/usdGeom/primvar.h"
 #include "pxr/usd/usdGeom/scope.h"
+#include "pxr/usd/usdGeom/subset.h"
 #include "pxr/usd/usdShade/shader.h"
 #include "pxr/usd/usdGeom/tokens.h"
 #include "pxr/usd/usdGeom/xform.h"
@@ -83,6 +84,35 @@ public:
 
 // constructor runs once to set USD plugin path
 static InitUSDPluginPath getUSDPlugInPathSet;
+
+MeshSubset::MeshSubset(std::string materialTextureName,
+                       pxr::VtArray<int> faceVertexIndices):
+                        _materialTextureName(materialTextureName),
+                        _faceVertexIndices(faceVertexIndices) {
+}
+
+MeshSubset::~MeshSubset() {
+}
+    
+const std::string
+MeshSubset::GetMaterialTextureName() {
+    return _materialTextureName;
+}
+
+const pxr::VtArray<int> MeshSubset::GetFaceVertexIndices() {
+    return _faceVertexIndices;
+}
+
+pxr::SdfPath
+MeshSubset::GetMaterialPath() {
+    return _materialPath;
+}
+
+void
+MeshSubset::SetMaterialPath(pxr::SdfPath path) {
+    _materialPath = pxr::SdfPath(path);
+    std::cerr << "materialPath now " << _materialPath << std::endl;
+}
 
 
 USDExporter::USDExporter(): _model(SU_INVALID), _textureWriter(SU_INVALID) {
@@ -796,6 +826,8 @@ USDExporter::_clearFacesExport() {
     _faceVertexCounts.clear();
     _flattenedFaceVertexIndices.clear();
     _currentVertexIndex = 0;
+    _meshFrontFaceSubsets.clear();
+    _meshBackFaceSubsets.clear();
 }
 
 // need to implement a private function for setting up
@@ -872,25 +904,44 @@ USDExporter::_ExportMaterial(const pxr::SdfPath path,
     st.ConnectToSource(result);
 }
 
+// we might have a single mesh that has multiple materials on both the front
+// and back
 bool
 USDExporter::_ExportMaterials(const pxr::SdfPath parentPath) {
     bool exportedSomeMaterials = false;
-    if (_frontFaceTextureName.empty() && _backFaceTextureName.empty()) {
+    if (_meshFrontFaceSubsets.empty() && _meshBackFaceSubsets.empty()) {
         // no need - no materials
         return exportedSomeMaterials;
     }
     pxr::SdfPath path = parentPath.AppendChild(pxr::TfToken("Materials"));
     auto primSchema = pxr::UsdGeomScope::Define(_stage, path);
-    if (!_frontFaceTextureName.empty()) {
-        std::string texturePath = _textureDirectory + "/" + _frontFaceTextureName;
-        pxr::SdfPath frontPath = path.AppendChild(pxr::TfToken("FrontMaterial"));
-        _ExportMaterial(frontPath, texturePath);
+    int index = 0;
+    for (MeshSubset& subset : _meshFrontFaceSubsets) {
+        std::string textureName = subset.GetMaterialTextureName();
+        std::string texturePath = _textureDirectory + "/" + textureName;
+        std::string materialName = "FrontMaterial";
+        if (index != 0) {
+            materialName += "_" + std::to_string(index);
+        }
+        index++;
+        pxr::SdfPath materialPath = path.AppendChild(pxr::TfToken(materialName));
+        subset.SetMaterialPath(materialPath);
+        _ExportMaterial(materialPath, texturePath);
         exportedSomeMaterials = true;
     }
-    if (!_backFaceTextureName.empty()) {
-        std::string texturePath = _textureDirectory + "/" + _backFaceTextureName;
-        pxr::SdfPath backPath = path.AppendChild(pxr::TfToken("BackMaterial"));
-        _ExportMaterial(backPath, texturePath);
+    index = 0;
+    for (MeshSubset& subset : _meshBackFaceSubsets) {
+        std::string textureName = subset.GetMaterialTextureName();
+        std::string texturePath = _textureDirectory + "/" + textureName;
+        std::string materialName = "BackMaterial";
+        if (index != 0) {
+            materialName += "_" + std::to_string(index);
+        }
+        index++;
+        pxr::SdfPath materialPath = path.AppendChild(pxr::TfToken(materialName));
+        subset.SetMaterialPath(materialPath);
+        std::cerr << "is material set? \"" << subset.GetMaterialPath() << "\" (should be \"" << materialPath << "\")" << std::endl;
+        _ExportMaterial(materialPath, texturePath);
         exportedSomeMaterials = true;
     }
     return exportedSomeMaterials;
@@ -908,6 +959,8 @@ USDExporter::_ExportFaces(const pxr::SdfPath parentPath,
     std::vector<SUFaceRef> faces(num);
     SU_CALL(SUEntitiesGetFaces(entities, num, &faces[0], &num));
     int exportedFaceCount = 0;
+    // if there is more than one face, we need to use the UsdGeomSubset API
+    // to specify the materials.
     for (size_t i = 0; i < num; i++) {
         if (_gatherFaceInfo(parentPath, faces[i])) {
             ++exportedFaceCount;
@@ -917,6 +970,9 @@ USDExporter::_ExportFaces(const pxr::SdfPath parentPath,
         // if we exported any materials, then we should export two copies of
         // the mesh, one facing forward and one facing backwards.
         if (_ExportMaterials(parentPath)) {
+            for (MeshSubset& subset : _meshBackFaceSubsets) {
+                std::cerr << "is material still set? \"" << subset.GetMaterialPath() << "\")" << std::endl;
+            }
             _ExportMeshes(parentPath);
         } else {
             // if we didn't export any materials, we should just export a single
@@ -1095,16 +1151,23 @@ USDExporter::_addFaceAsTexturedTriangles(SUFaceRef face) {
     float frontA = _frontRGBA[3];
     pxr::GfVec3f backRGB(_backRGBA[0], _backRGBA[1], _backRGBA[2]);
     float backA = _backRGBA[3];
+    pxr::VtArray<int> submeshIndices;
     for (size_t i = 0; i < num_triangles; i++) {
         size_t index = i * 3;
         _faceVertexCounts.push_back(3); // Three vertices per triangle
         
         size_t localIndex = indices[index++];
-        _flattenedFaceVertexIndices.push_back(int(indexOrigin + localIndex));
+        int meshIndex = int(indexOrigin + localIndex);
+        submeshIndices.push_back(meshIndex);
+        _flattenedFaceVertexIndices.push_back(meshIndex);
         localIndex = indices[index++];
-        _flattenedFaceVertexIndices.push_back(int(indexOrigin + localIndex));
+        meshIndex = int(indexOrigin + localIndex);
+        submeshIndices.push_back(meshIndex);
+        _flattenedFaceVertexIndices.push_back(meshIndex);
         localIndex = indices[index++];
-        _flattenedFaceVertexIndices.push_back(int(indexOrigin + localIndex));
+        meshIndex = int(indexOrigin + localIndex);
+        submeshIndices.push_back(meshIndex);
+        _flattenedFaceVertexIndices.push_back(meshIndex);
         // we have a front & back RGBA for each triangle, from the original face
         _frontFaceRGBs.push_back(frontRGB);
         _frontFaceAs.push_back(frontA);
@@ -1112,12 +1175,21 @@ USDExporter::_addFaceAsTexturedTriangles(SUFaceRef face) {
         _backFaceAs.push_back(backA);
     }
     _currentVertexIndex += num_vertices;
+    if (_hasFrontFaceMaterial) {
+        MeshSubset subset(_frontFaceTextureName, submeshIndices);
+        _meshFrontFaceSubsets.push_back(subset);
+    }
+    if (_hasBackFaceMaterial) {
+        MeshSubset subset(_backFaceTextureName, submeshIndices);
+        _meshBackFaceSubsets.push_back(subset);
+    }
     // free all the memory we allocated here via the SU API
     SU_CALL(SUMeshHelperRelease(&mesh_ref));
 }
 
 void
-USDExporter::_exportMesh(pxr::SdfPath path, pxr::SdfPath materialPath,
+USDExporter::_exportMesh(pxr::SdfPath path,
+                         std::vector<MeshSubset> meshSubsets,
                          pxr::TfToken const orientation,
                          pxr::VtArray<pxr::GfVec3f>& rgb,
                          pxr::VtArray<float>& a,
@@ -1128,11 +1200,6 @@ USDExporter::_exportMesh(pxr::SdfPath path, pxr::SdfPath materialPath,
                          ) {
     _meshCount++;
     auto primSchema = pxr::UsdGeomMesh::Define(_stage, pxr::SdfPath(path));
-    if (materialPath != pxr::SdfPath::EmptyPath()) {
-        pxr::UsdPrim prim = primSchema.GetPrim();
-        pxr::TfToken relName("material:binding");
-        prim.CreateRelationship(relName).AddTarget(materialPath);
-    }
     primSchema.CreateExtentAttr().Set(extent);
     primSchema.CreateSubdivisionSchemeAttr().Set(pxr::UsdGeomTokens->none);
     primSchema.CreateOrientationAttr().Set(orientation);
@@ -1165,8 +1232,45 @@ USDExporter::_exportMesh(pxr::SdfPath path, pxr::SdfPath materialPath,
                                               pxr::SdfValueTypeNames->Float2Array,
                                               pxr::UsdGeomTokens->vertex);
     uvPrimvar.Set(uv);
-}
+    if (!meshSubsets.size()) {
+        // no materials - we're done
+        return ;
+    }
+    // now need to bind the materials that have been already been created to
+    // this mesh. If it has one material, we'll bind it to the whole mesh.
+    // if there's more than one, we need to use the UsdGeomSubset API on this
+    // mesh and bind each material to the appropriate set of indices
+    pxr::TfToken relName = pxr::UsdShadeTokens->materialBinding;
+    pxr::TfToken bindName = pxr::UsdShadeTokens->materialBind;
+    if (meshSubsets.size() == 1) {
+        MeshSubset& meshSubset = meshSubsets[0];
+        pxr::UsdPrim prim = primSchema.GetPrim();
+        prim.CreateRelationship(relName).AddTarget(meshSubset.GetMaterialPath());
+        return ;
+    }
+    // okay, we have 2 or more materials associated with this mesh
+    int index = 0;
+    for (MeshSubset& meshSubset : meshSubsets) {
+        std::string subsetName = path.GetName() + "_Material";
+        if (index != 0) {
+            subsetName += "_" + std::to_string(index);
+        }
+        index++;
+        pxr::SdfPath subsetPath = path.AppendChild(pxr::TfToken(subsetName));
+        auto subset = pxr::UsdGeomSubset::CreateGeomSubset(primSchema,
+                                                           subsetName,
+                                                           pxr::UsdGeomTokens->face,
+                                                           meshSubset.GetFaceVertexIndices(),
+                                                           bindName,
+                                                           pxr::UsdGeomTokens->nonOverlapping);
+        pxr::UsdPrim prim = subset.GetPrim();
+        pxr::SdfPath materialPath = meshSubset.GetMaterialPath();
+        std::cerr << "using materialPath " << materialPath << std::endl;
 
+        prim.CreateRelationship(relName).AddTarget(materialPath);
+    }
+    return ;
+}
 
 void
 USDExporter::_ExportMeshes(const pxr::SdfPath parentPath) {
@@ -1189,7 +1293,7 @@ USDExporter::_ExportMeshes(const pxr::SdfPath parentPath) {
         frontMaterialsPath = pxr::SdfPath::EmptyPath();
     }
     pxr::SdfPath frontPath = parentPath.AppendChild(pxr::TfToken(frontSide));
-    _exportMesh(frontPath, frontMaterialsPath,
+    _exportMesh(frontPath, _meshFrontFaceSubsets,
                 pxr::UsdGeomTokens->rightHanded,
                 _frontFaceRGBs, _frontFaceAs, _frontUVs, extent, false, false);
 
@@ -1199,7 +1303,7 @@ USDExporter::_ExportMeshes(const pxr::SdfPath parentPath) {
         backMaterialsPath = pxr::SdfPath::EmptyPath();
     }
     pxr::SdfPath backPath = parentPath.AppendChild(pxr::TfToken(backSide));
-    _exportMesh(backPath, backMaterialsPath,
+    _exportMesh(backPath, _meshBackFaceSubsets,
                 pxr::UsdGeomTokens->leftHanded,
                 _backFaceRGBs, _backFaceAs, _backUVs, extent, true, false);
 
@@ -1215,7 +1319,8 @@ USDExporter::_ExportDoubleSidedMesh(const pxr::SdfPath parentPath) {
     pxr::VtArray<pxr::GfVec3f> extent(2);
     pxr::UsdGeomPointBased::ComputeExtent(_points, &extent);
     pxr::SdfPath path = parentPath.AppendChild(pxr::TfToken(bothSides));
-    _exportMesh(path, pxr::SdfPath::EmptyPath(),
+    std::vector<MeshSubset> empty;
+    _exportMesh(path, empty,
                 pxr::UsdGeomTokens->rightHanded,
                 _frontFaceRGBs, _frontFaceAs, _frontUVs, extent, false, true);
     _clearFacesExport(); // free the info
