@@ -175,6 +175,10 @@ private:
     // This is only for material assignment
     std::vector<MeshSubset> _meshFrontFaceSubsets;
     std::vector<MeshSubset> _meshBackFaceSubsets;
+    // Many SketchUp models seem to reuse the same texture on different faces,
+    // so we cache the material that we make from each texture so we only define
+    // it once per mesh.
+    std::map<std::string, pxr::SdfPath> _texturePathMaterialPath;
     
     bool _hasFrontFaceMaterial;
     std::string _frontFaceTextureName;
@@ -252,6 +256,7 @@ private:
     std::string _textureFileName(SUTextureRef textureRef);
     bool _addFrontFaceMaterial(SUFaceRef face);
     bool _addBackFaceMaterial(SUFaceRef face);
+    int _cacheTextureMaterial(pxr::SdfPath path, MeshSubset& subset, int index);
     void _exportMesh(pxr::SdfPath path,
                      std::vector<MeshSubset> _meshSubsets,
                      pxr::TfToken const orientation,

@@ -41,6 +41,7 @@
 #include "pxr/usd/ar/defaultResolver.h"
 #include "pxr/usd/kind/registry.h"
 #include "pxr/usd/sdf/layer.h"
+#include "pxr/usd/sdf/changeBlock.h"
 #include "pxr/usd/usd/editContext.h"
 #include "pxr/usd/usd/zipFile.h"
 #include "pxr/usd/usdUtils/dependencies.h"
@@ -822,6 +823,7 @@ USDExporter::_clearFacesExport() {
     _currentVertexIndex = 0;
     _meshFrontFaceSubsets.clear();
     _meshBackFaceSubsets.clear();
+    _texturePathMaterialPath.clear();
 }
 
 // need to implement a private function for setting up
@@ -900,44 +902,49 @@ USDExporter::_ExportMaterial(const pxr::SdfPath path,
 
 // we might have a single mesh that has multiple materials on both the front
 // and back
+int
+USDExporter::_cacheTextureMaterial(pxr::SdfPath path, MeshSubset& subset, int index) {
+    std::string textureName = subset.GetMaterialTextureName();
+    std::string texturePath = _textureDirectory + "/" + textureName;
+    if (_texturePathMaterialPath.find(texturePath) == _texturePathMaterialPath.end()) {
+        // okay, we have not yet made a material with this texture, so
+        // let's make a new one and cache it for later.
+        std::string materialName = "Material";
+        if (index != 0) {
+            materialName += "_" + std::to_string(index);
+        }
+        index++;
+        pxr::SdfPath materialPath = path.AppendChild(pxr::TfToken(materialName));
+        subset.SetMaterialPath(materialPath);
+        _ExportMaterial(materialPath, texturePath);
+        _texturePathMaterialPath[texturePath] = materialPath;
+    } else {
+        pxr::SdfPath materialPath = _texturePathMaterialPath[texturePath];
+        subset.SetMaterialPath(materialPath);
+    }
+    return index;
+}
+
 bool
 USDExporter::_ExportMaterials(const pxr::SdfPath parentPath) {
-    bool exportedSomeMaterials = false;
     if (_meshFrontFaceSubsets.empty() && _meshBackFaceSubsets.empty()) {
         // no need - no materials
-        return exportedSomeMaterials;
+        return false;
     }
     pxr::SdfPath path = parentPath.AppendChild(pxr::TfToken("Materials"));
     auto primSchema = pxr::UsdGeomScope::Define(_stage, path);
     int index = 0;
+    // we might have a single mesh that has many materials, many of which are
+    // the same. Since SketchUp has such a simple material schema (just a
+    // texture map), we want to coalesce these as much as possible.
     for (MeshSubset& subset : _meshFrontFaceSubsets) {
-        std::string textureName = subset.GetMaterialTextureName();
-        std::string texturePath = _textureDirectory + "/" + textureName;
-        std::string materialName = "FrontMaterial";
-        if (index != 0) {
-            materialName += "_" + std::to_string(index);
-        }
-        index++;
-        pxr::SdfPath materialPath = path.AppendChild(pxr::TfToken(materialName));
-        subset.SetMaterialPath(materialPath);
-        _ExportMaterial(materialPath, texturePath);
-        exportedSomeMaterials = true;
+        index = _cacheTextureMaterial(path, subset, index);
     }
-    index = 0;
     for (MeshSubset& subset : _meshBackFaceSubsets) {
-        std::string textureName = subset.GetMaterialTextureName();
-        std::string texturePath = _textureDirectory + "/" + textureName;
-        std::string materialName = "BackMaterial";
-        if (index != 0) {
-            materialName += "_" + std::to_string(index);
-        }
-        index++;
-        pxr::SdfPath materialPath = path.AppendChild(pxr::TfToken(materialName));
-        subset.SetMaterialPath(materialPath);
-        _ExportMaterial(materialPath, texturePath);
-        exportedSomeMaterials = true;
+        index = _cacheTextureMaterial(path, subset, index);
     }
-    return exportedSomeMaterials;
+    //std::cerr << "There are " << _texturePathMaterialPath.size() << " unique materials for this mesh" << std::endl;
+    return index;
 }
 
 void
@@ -964,11 +971,13 @@ USDExporter::_ExportFaces(const pxr::SdfPath parentPath,
             currentFaceIndices.push_back(index);
         }
         exportedFaceCount += faceCount;
-        if (_hasFrontFaceMaterial) {
+        // note: currently, we could a display color as a material, so we
+        // should check if we have a texture or not...
+        if (_hasFrontFaceMaterial && !_frontFaceTextureName.empty()) {
             MeshSubset subset(_frontFaceTextureName, currentFaceIndices);
             _meshFrontFaceSubsets.push_back(subset);
         }
-        if (_hasBackFaceMaterial) {
+        if (_hasBackFaceMaterial && !_backFaceTextureName.empty()) {
             MeshSubset subset(_backFaceTextureName, currentFaceIndices);
             _meshBackFaceSubsets.push_back(subset);
         }
@@ -1195,7 +1204,7 @@ USDExporter::_exportMesh(pxr::SdfPath path,
                          bool doubleSided = false
                          ) {
     _meshCount++;
-    auto primSchema = pxr::UsdGeomMesh::Define(_stage, pxr::SdfPath(path));
+    auto primSchema = pxr::UsdGeomMesh::Define(_stage, path);
     primSchema.CreateExtentAttr().Set(extent);
     primSchema.CreateSubdivisionSchemeAttr().Set(pxr::UsdGeomTokens->none);
     primSchema.CreateOrientationAttr().Set(orientation);
@@ -1242,26 +1251,60 @@ USDExporter::_exportMesh(pxr::SdfPath path,
         MeshSubset& meshSubset = meshSubsets[0];
         pxr::UsdPrim prim = primSchema.GetPrim();
         prim.CreateRelationship(relName).AddTarget(meshSubset.GetMaterialPath());
-        return ;
-    }
-    // okay, we have 2 or more materials associated with this mesh
-    int index = 0;
-    for (MeshSubset& meshSubset : meshSubsets) {
-        std::string subsetName = path.GetName() + "_Material";
-        if (index != 0) {
-            subsetName += "_" + std::to_string(index);
+    } else {
+        // okay, we have 2 or more materials associated with this mesh
+        std::string subsetBaseName = "SubsetForMaterial";
+        int index = 0;
+
+        bool needWorkaround = true; // needed as of USD release 18.09
+        if (meshSubsets.size() < 100) {
+            // if we have less than 100, this will be performant
+            needWorkaround = false;
         }
-        index++;
-        pxr::SdfPath subsetPath = path.AppendChild(pxr::TfToken(subsetName));
-        auto subset = pxr::UsdGeomSubset::CreateGeomSubset(primSchema,
-                                                           subsetName,
-                                                           pxr::UsdGeomTokens->face,
-                                                           meshSubset.GetFaceIndices(),
-                                                           bindName,
-                                                           pxr::UsdGeomTokens->nonOverlapping);
-        pxr::UsdPrim prim = subset.GetPrim();
-        pxr::SdfPath materialPath = meshSubset.GetMaterialPath();
-        prim.CreateRelationship(relName).AddTarget(materialPath);
+        if (needWorkaround) {
+            std::cerr << "mesh has " << meshSubsets.size() << " subsets" << std::endl;
+            // this is a workaround for the fact that currently, if I have to
+            // create a lot (say, 1,000s or more) subsets, it can run very
+            // slowly in Usd.  So we break it up into two parts - the first
+            // we use the Sdf API to
+            {
+                pxr::SdfChangeBlock block;
+                auto l = _stage->GetRootLayer();
+                pxr::SdfPrimSpecHandle prim = l->GetPrimAtPath(path);
+                for (MeshSubset& meshSubset : meshSubsets) {
+                    std::string subsetName = subsetBaseName;
+                    if (index != 0) {
+                        subsetName += "_" + std::to_string(index);
+                    }
+                    index++;
+                    pxr::SdfPrimSpec::New(prim,
+                                          subsetName,
+                                          pxr::SdfSpecifierDef,
+                                          "GeomSubset");
+                }
+            }
+        }
+        index = 0;
+        for (MeshSubset& meshSubset : meshSubsets) {
+            std::string subsetName = subsetBaseName;
+            if (index != 0) {
+                subsetName += "_" + std::to_string(index);
+            }
+            index++;
+            pxr::SdfPath subsetPath = path.AppendChild(pxr::TfToken(subsetName));
+            auto subset = pxr::UsdGeomSubset::CreateGeomSubset(primSchema,
+                                                               subsetName,
+                                                               pxr::UsdGeomTokens->face,
+                                                               meshSubset.GetFaceIndices(),
+                                                               bindName,
+                                                               pxr::UsdGeomTokens->nonOverlapping);
+            pxr::UsdPrim prim = subset.GetPrim();
+            pxr::SdfPath materialPath = meshSubset.GetMaterialPath();
+            prim.CreateRelationship(relName).AddTarget(materialPath);
+        }
+        if (needWorkaround) {
+            std::cerr << "DONE writing " << meshSubsets.size() << " subsets" << std::endl;
+        }
     }
     return ;
 }
