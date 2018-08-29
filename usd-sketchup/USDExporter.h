@@ -53,19 +53,18 @@
 
 class MeshSubset {
 public:
-    MeshSubset(std::string materialTextureName,
-               pxr::VtArray<int> faceVertexIndices);
+    MeshSubset(std::string materialTextureName, pxr::VtArray<int> faceIndices);
     ~MeshSubset();
     //MeshSubset(const MeshSubset&) = delete;
     
     const std::string GetMaterialTextureName();
-    const pxr::VtArray<int> GetFaceVertexIndices();
+    const pxr::VtArray<int> GetFaceIndices();
     pxr::SdfPath GetMaterialPath();
     void SetMaterialPath(pxr::SdfPath path);
     
 private:
     std::string _materialTextureName;
-    pxr::VtArray<int> _faceVertexIndices;
+    pxr::VtArray<int> _faceIndices;
     pxr::SdfPath _materialPath;
 };
 
@@ -247,9 +246,9 @@ private:
                          std::string texturePath);
     bool _ExportMaterials(const pxr::SdfPath parentPath);
     void _ExportFaces(const pxr::SdfPath parentPath, SUEntitiesRef entities);
-    bool _gatherFaceInfo(const pxr::SdfPath parentPath, SUFaceRef face);
+    size_t _gatherFaceInfo(const pxr::SdfPath parentPath, SUFaceRef face);
     void _clearFacesExport();
-    void _addFaceAsTexturedTriangles(SUFaceRef face);
+    size_t _addFaceAsTexturedTriangles(SUFaceRef face);
     std::string _textureFileName(SUTextureRef textureRef);
     bool _addFrontFaceMaterial(SUFaceRef face);
     bool _addBackFaceMaterial(SUFaceRef face);

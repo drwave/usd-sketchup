@@ -85,10 +85,9 @@ public:
 // constructor runs once to set USD plugin path
 static InitUSDPluginPath getUSDPlugInPathSet;
 
-MeshSubset::MeshSubset(std::string materialTextureName,
-                       pxr::VtArray<int> faceVertexIndices):
+MeshSubset::MeshSubset(std::string materialTextureName, pxr::VtArray<int> faceIndices) :
                         _materialTextureName(materialTextureName),
-                        _faceVertexIndices(faceVertexIndices) {
+                        _faceIndices(faceIndices) {
 }
 
 MeshSubset::~MeshSubset() {
@@ -99,8 +98,8 @@ MeshSubset::GetMaterialTextureName() {
     return _materialTextureName;
 }
 
-const pxr::VtArray<int> MeshSubset::GetFaceVertexIndices() {
-    return _faceVertexIndices;
+const pxr::VtArray<int> MeshSubset::GetFaceIndices() {
+    return _faceIndices;
 }
 
 pxr::SdfPath
@@ -111,9 +110,7 @@ MeshSubset::GetMaterialPath() {
 void
 MeshSubset::SetMaterialPath(pxr::SdfPath path) {
     _materialPath = pxr::SdfPath(path);
-    std::cerr << "materialPath now " << _materialPath << std::endl;
 }
-
 
 USDExporter::USDExporter(): _model(SU_INVALID), _textureWriter(SU_INVALID) {
     SUInitialize();
@@ -282,31 +279,28 @@ USDExporter::GetExportARKitCompatibleUSDZ() const {
 
 void
 USDExporter::_updateFileNames() {
-        _baseFileName = _usdFileName;
-    if (!_exportToSingleFile) {
-        std::string path = pxr::TfGetPathName(_usdFileName);
-        std::string base = pxr::TfGetBaseName(_usdFileName);
-        std::string baseNoExt = pxr::TfStringGetBeforeSuffix(base);
-        std::string ext = pxr::TfStringGetSuffix(_usdFileName);
-        if (ext == "usdz") {
-            _exportingUSDZ = true;
-            _baseFileName = path + baseNoExt + ".usd";
-            if (GetExportARKitCompatibleUSDZ()) {
-                // note: if we're exporting USDZ, for now, to be ARKit compatible,
-                // they want a single binary USD file, so we will flip that switch
-                // Also, ARKit expects the one and only USD file in there to end w/c
-                SetExportToSingleFile(true);
-                _baseFileName = path + baseNoExt + ".usdc";
-            }
-            _componentDefinitionsFileName = path + baseNoExt + ".components.usd";
-            _geomFileName = path + baseNoExt + ".geom.usd";
-            _zipFileName = path + baseNoExt + ".usdz";
-        } else {
-            // could be usda or crate
-            _exportingUSDZ = false;
-            _geomFileName = path + baseNoExt + ".geom." + ext;
-            _componentDefinitionsFileName = path + baseNoExt + ".components." + ext;
+    _baseFileName = _usdFileName;
+    std::string ext = pxr::TfStringGetSuffix(_usdFileName);
+    std::string path = pxr::TfGetPathName(_usdFileName);
+    std::string base = pxr::TfGetBaseName(_usdFileName);
+    std::string baseNoExt = pxr::TfStringGetBeforeSuffix(base);
+    _exportingUSDZ = false;
+    if (ext == "usdz") {
+        _exportingUSDZ = true;
+        _zipFileName = path + baseNoExt + ".usdz";
+        if (GetExportARKitCompatibleUSDZ()) {
+            // note: if we're exporting USDZ, for now, to be ARKit compatible,
+            // they want a single binary USD file, so we will flip that switch
+            // Also, ARKit expects the one and only USD file in there to end w/c
+            _exportToSingleFile = true;
+            _baseFileName = path + baseNoExt + ".usdc";
         }
+        return ;
+    }
+    if (!_exportToSingleFile) {
+        // could be usda or crate
+        _geomFileName = path + baseNoExt + ".geom." + ext;
+        _componentDefinitionsFileName = path + baseNoExt + ".components." + ext;
     }
 }
 
@@ -940,7 +934,6 @@ USDExporter::_ExportMaterials(const pxr::SdfPath parentPath) {
         index++;
         pxr::SdfPath materialPath = path.AppendChild(pxr::TfToken(materialName));
         subset.SetMaterialPath(materialPath);
-        std::cerr << "is material set? \"" << subset.GetMaterialPath() << "\" (should be \"" << materialPath << "\")" << std::endl;
         _ExportMaterial(materialPath, texturePath);
         exportedSomeMaterials = true;
     }
@@ -958,21 +951,32 @@ USDExporter::_ExportFaces(const pxr::SdfPath parentPath,
     _clearFacesExport();
     std::vector<SUFaceRef> faces(num);
     SU_CALL(SUEntitiesGetFaces(entities, num, &faces[0], &num));
-    int exportedFaceCount = 0;
+    size_t exportedFaceCount = 0;
     // if there is more than one face, we need to use the UsdGeomSubset API
     // to specify the materials.
+    // if we bisect a quad in both ways, we have 4 faces, but then each of these
+    // faces generates two triangles, each of which is a separate face to USD
     for (size_t i = 0; i < num; i++) {
-        if (_gatherFaceInfo(parentPath, faces[i])) {
-            ++exportedFaceCount;
+        pxr::VtArray<int> currentFaceIndices;
+        size_t faceCount = _gatherFaceInfo(parentPath, faces[i]);
+        for (size_t i = 0; i < faceCount; i++) {
+            int index = (int)(i + exportedFaceCount);
+            currentFaceIndices.push_back(index);
+        }
+        exportedFaceCount += faceCount;
+        if (_hasFrontFaceMaterial) {
+            MeshSubset subset(_frontFaceTextureName, currentFaceIndices);
+            _meshFrontFaceSubsets.push_back(subset);
+        }
+        if (_hasBackFaceMaterial) {
+            MeshSubset subset(_backFaceTextureName, currentFaceIndices);
+            _meshBackFaceSubsets.push_back(subset);
         }
     }
     if (exportedFaceCount) {
         // if we exported any materials, then we should export two copies of
         // the mesh, one facing forward and one facing backwards.
         if (_ExportMaterials(parentPath)) {
-            for (MeshSubset& subset : _meshBackFaceSubsets) {
-                std::cerr << "is material still set? \"" << subset.GetMaterialPath() << "\")" << std::endl;
-            }
             _ExportMeshes(parentPath);
         } else {
             // if we didn't export any materials, we should just export a single
@@ -982,18 +986,17 @@ USDExporter::_ExportFaces(const pxr::SdfPath parentPath,
     }
 }
 
-bool
+size_t
 USDExporter::_gatherFaceInfo(const pxr::SdfPath parentPath, SUFaceRef face) {
     SUDrawingElementRef drawingElement = SUFaceToDrawingElement(face);
     if (SUIsValid(drawingElement)) {
-        bool isHidden = false;
+        bool isHidden = 0;
         SUDrawingElementGetHidden(drawingElement, &isHidden);
         if (isHidden) {
-            return false;
+            return 0;
         }
     }
-    _addFaceAsTexturedTriangles(face);
-    return true;
+    return _addFaceAsTexturedTriangles(face);
 }
 
 std::string
@@ -1074,10 +1077,10 @@ USDExporter::_addBackFaceMaterial(SUFaceRef face) {
     return true;
 }
 
-void
+size_t
 USDExporter::_addFaceAsTexturedTriangles(SUFaceRef face) {
     if (SUIsInvalid(face)) {
-        return;
+        return 0;
     }
     _hasFrontFaceMaterial = _addFrontFaceMaterial(face);
     _hasBackFaceMaterial = _addBackFaceMaterial(face);
@@ -1092,7 +1095,7 @@ USDExporter::_addFaceAsTexturedTriangles(SUFaceRef face) {
     if (!num_vertices) {
         // free all the memory we allocated here via the SU API
         SU_CALL(SUMeshHelperRelease(&mesh_ref));
-        return;
+        return num_vertices;
     }
     std::vector<SUPoint3D> vertices(num_vertices);
     SU_CALL(SUMeshHelperGetVertices(mesh_ref, num_vertices,
@@ -1175,16 +1178,9 @@ USDExporter::_addFaceAsTexturedTriangles(SUFaceRef face) {
         _backFaceAs.push_back(backA);
     }
     _currentVertexIndex += num_vertices;
-    if (_hasFrontFaceMaterial) {
-        MeshSubset subset(_frontFaceTextureName, submeshIndices);
-        _meshFrontFaceSubsets.push_back(subset);
-    }
-    if (_hasBackFaceMaterial) {
-        MeshSubset subset(_backFaceTextureName, submeshIndices);
-        _meshBackFaceSubsets.push_back(subset);
-    }
     // free all the memory we allocated here via the SU API
     SU_CALL(SUMeshHelperRelease(&mesh_ref));
+    return num_triangles;
 }
 
 void
@@ -1260,13 +1256,11 @@ USDExporter::_exportMesh(pxr::SdfPath path,
         auto subset = pxr::UsdGeomSubset::CreateGeomSubset(primSchema,
                                                            subsetName,
                                                            pxr::UsdGeomTokens->face,
-                                                           meshSubset.GetFaceVertexIndices(),
+                                                           meshSubset.GetFaceIndices(),
                                                            bindName,
                                                            pxr::UsdGeomTokens->nonOverlapping);
         pxr::UsdPrim prim = subset.GetPrim();
         pxr::SdfPath materialPath = meshSubset.GetMaterialPath();
-        std::cerr << "using materialPath " << materialPath << std::endl;
-
         prim.CreateRelationship(relName).AddTarget(materialPath);
     }
     return ;
