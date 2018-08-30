@@ -91,10 +91,10 @@ Cloning into 'USD'...
 ##### MacOS:
 
 In a terminal, run ```xcode-select``` to ensure command line developer tools are 
-installed. Then run the script. We recommend building without Python, without imaging, and as a monolithic library. The included Xcode project assumes that it has been built that way and installed into ```/opt/local/USDNoPythonNoImagingMonolithic```.
+installed. Then run the script. We recommend building without Python, without imaging, and as a monolithic library that includes tbb in it. The included Xcode project assumes that it has been built that way and installed into ```/opt/local/USDNoPythonNoImagingMonolithicIncludeTBB```.
 
 ```
-> python USD/build_scripts/build_usd.py --no-python --no-imaging --build-monolithic /opt/local/USDNoPythonNoImagingMonolithic
+> python USD/build_scripts/build_usd.py --build-args TBB,extra_inc=big_iron.inc --no-python --no-imaging --no-usdview --build-monolithic /opt/local/USDNoPythonNoImagingMonolithicIncludeTBB
 ```
 
 #### 3. Download the SketchUp SDK
