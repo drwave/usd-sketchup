@@ -686,6 +686,17 @@ USDExporter::_ExportInstance(const pxr::SdfPath parentPath,
         bool isHidden = false;
         SUDrawingElementGetHidden(de, &isHidden);
         if (isHidden) {
+            //std::cerr << cName << " is hidden - skipping" << std::endl;
+            return false;
+        }
+        // need to find out what layer it's on, and make sure that layer
+        // is visible
+        SULayerRef layer;
+        SU_CALL(SUDrawingElementGetLayer(de, &layer));
+        bool visible = true;
+        SU_CALL(SULayerGetVisibility(layer, &visible));
+        if (!visible) {
+            //std::cerr << cName << " is on a hidden layer - skipping" << std::endl;
             return false;
         }
     }
@@ -1262,7 +1273,6 @@ USDExporter::_exportMesh(pxr::SdfPath path,
             needWorkaround = false;
         }
         if (needWorkaround) {
-            std::cerr << "mesh has " << meshSubsets.size() << " subsets" << std::endl;
             // this is a workaround for the fact that currently, if I have to
             // create a lot (say, 1,000s or more) subsets, it can run very
             // slowly in Usd.  So we break it up into two parts - the first
@@ -1301,9 +1311,6 @@ USDExporter::_exportMesh(pxr::SdfPath path,
             pxr::UsdPrim prim = subset.GetPrim();
             pxr::SdfPath materialPath = meshSubset.GetMaterialPath();
             prim.CreateRelationship(relName).AddTarget(materialPath);
-        }
-        if (needWorkaround) {
-            std::cerr << "DONE writing " << meshSubsets.size() << " subsets" << std::endl;
         }
     }
     return ;
