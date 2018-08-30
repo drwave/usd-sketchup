@@ -130,10 +130,6 @@ Initially, that directory will probably not be writable on your machine, so you 
 
 Copying the plug-in to the directory makes it very easy to debug the plug-in, as you can launch SketchUp Pro from inside of Xcode, set breakpoints in your plug-in, etc. Very handy when doing development.
 
-Missing Features
-------------
-Currently, the biggest missing feature from this exporter is the ability to handle meshes that have multiple materials on them. Our in-house experience of SketchUp Pro is that our users don't tend to create files like this, but looking around on 3D Warehouse, we see a lot of examples of this.
-
 
 Contributing
 ------------
