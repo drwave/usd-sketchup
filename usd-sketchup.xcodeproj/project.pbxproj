@@ -221,7 +221,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "plugIn=\"${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}\"\n# rewrite tbb reference in plug-in\ntbb=libtbb.dylib\nold=@rpath/${tbb}\nnew=@loader_path/../Frameworks/${tbb}\necho \"/usr/bin/install_name_tool -change $old $new $plugIn\" /usr/bin/install_name_tool -change $old $new $plugIn\n\n# rewrite tbb reference in usd dylib\nframeworks=\"${BUILT_PRODUCTS_DIR}/${FRAMEWORKS_FOLDER_PATH}\"\ndst=${frameworks}/libusd_ms.dylib\necho \"/usr/bin/install_name_tool -change $old $new $dst\"\n/usr/bin/install_name_tool -change $old $new $dst\n\n# rewrite usd reference in plugin\nusd=libusd_ms.dylib\nold=@rpath/${usd}\nnew=@loader_path/../Frameworks/${usd}\necho \"/usr/bin/install_name_tool -change $old $new $plugIn\"\n/usr/bin/install_name_tool -change $old $new $plugIn\n";
+			shellScript = "plugIn=\"${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}\"\n# rewrite tbb reference in plug-in\ntbb=libtbb.dylib\nold=@rpath/${tbb}\nnew=@loader_path/../Frameworks/${tbb}\necho \"/usr/bin/install_name_tool -change $old $new $plugIn\" \n/usr/bin/install_name_tool -change $old $new $plugIn\n\n# rewrite tbb reference in usd dylib\nframeworks=\"${BUILT_PRODUCTS_DIR}/${FRAMEWORKS_FOLDER_PATH}\"\ndst=${frameworks}/libusd_ms.dylib\necho \"/usr/bin/install_name_tool -change $old $new $dst\"\n/usr/bin/install_name_tool -change $old $new $dst\n\n# rewrite usd reference in plugin\nusd=libusd_ms.dylib\nold=@rpath/${usd}\nnew=@loader_path/../Frameworks/${usd}\necho \"/usr/bin/install_name_tool -change $old $new $plugIn\"\n/usr/bin/install_name_tool -change $old $new $plugIn\n";
 			showEnvVarsInLog = 0;
 		};
 		40E8C32021308AC900217059 /* Copy PlugIn Bundle to SketchUp 2018 */ = {
@@ -403,6 +403,7 @@
 				HEADER_SEARCH_PATHS = "${inherited}";
 				INFOPLIST_FILE = "usd-sketchup/Info.plist";
 				INSTALL_PATH = "\"/Applications/SketchUp\\ 2018/SketchUp.app/Contents/PlugIns/\"";
+				OTHER_LDFLAGS = "-headerpad_max_install_names";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.sketchup.exporters.usd-sketchup";
 				PRODUCT_NAME = USDExporter;
 				SKIP_INSTALL = YES;
@@ -420,6 +421,7 @@
 				HEADER_SEARCH_PATHS = "${inherited}";
 				INFOPLIST_FILE = "usd-sketchup/Info.plist";
 				INSTALL_PATH = "\"/Applications/SketchUp\\ 2018/SketchUp.app/Contents/PlugIns/\"";
+				OTHER_LDFLAGS = "-headerpad_max_install_names";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.sketchup.exporters.usd-sketchup";
 				PRODUCT_NAME = USDExporter;
 				SKIP_INSTALL = YES;
