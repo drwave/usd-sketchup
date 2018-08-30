@@ -496,7 +496,6 @@ USDExporter::_ExportComponentDefinition(const pxr::SdfPath parentPath,
     // track back to this specific component definition:
     _originalComponentNameSafeNameDictionary[name] = cName; // for metadata
     _usedComponentNames.insert(cName); // so we know not to reuse it
-    
     uintptr_t index = reinterpret_cast<uintptr_t>(comp_def.ptr);
     // so we can find this name given an instance
     _componentPtrSafeNameMap[index] = cName;
@@ -505,6 +504,7 @@ USDExporter::_ExportComponentDefinition(const pxr::SdfPath parentPath,
     SUComponentDefinitionGetEntities(comp_def, &entities);
     
     const pxr::TfToken child(cName);
+    //std::cerr << "appending " << child << " to parentPath" << parentPath << std::endl;
     const pxr::SdfPath path = parentPath.AppendChild(child);
     auto primSchema = pxr::UsdGeomXform::Define(_stage, path);
     primSchema.GetPrim().SetMetadata(pxr::SdfFieldKeys->Kind,
@@ -571,7 +571,7 @@ USDExporter::_countEntities(SUEntitiesRef entities) {
                 SU_CALL(SULayerGetVisibility(layer, &visible));
                 if (!visible) {
                     //std::cerr << cName << " is on a hidden layer - skipping" << std::endl;
-                    return false;
+                    continue;
                 }
             }
             SU_CALL(SUComponentInstanceGetDefinition(instance, &definition));
@@ -739,6 +739,7 @@ USDExporter::_ExportInstance(const pxr::SdfPath parentPath,
     SU_CALL(SUComponentDefinitionGetBehavior(definition, &behavior));
     _isBillboard = behavior.component_always_face_camera;
 
+    //std::cerr << "appending instanceName " << instanceName << " to parentPath " << parentPath << std::endl;
     pxr::SdfPath path = parentPath.AppendChild(pxr::TfToken(instanceName));
     auto primSchema = pxr::UsdGeomXform::Define(_stage, path);
     primSchema.GetPrim().SetInstanceable(true);
@@ -825,7 +826,8 @@ USDExporter::_ExportGroup(const pxr::SdfPath parentPath, SUGroupRef group,
     
     SUEntitiesRef group_entities = SU_INVALID;
     SU_CALL(SUGroupGetEntities(group, &group_entities));
-    
+
+    //std::cerr << "appending group " << groupName << " to parentPath" << parentPath << std::endl;
     pxr::SdfPath path = parentPath.AppendChild(pxr::TfToken(groupName));
     auto primSchema = pxr::UsdGeomXform::Define(_stage, path);
     SUTransformation t;
@@ -957,6 +959,7 @@ USDExporter::_cacheTextureMaterial(pxr::SdfPath path, MeshSubset& subset, int in
             materialName += "_" + std::to_string(index);
         }
         index++;
+        //std::cerr << "appending material " << materialName << " to parentPath" << path << std::endl;
         pxr::SdfPath materialPath = path.AppendChild(pxr::TfToken(materialName));
         subset.SetMaterialPath(materialPath);
         _ExportMaterial(materialPath, texturePath);
@@ -1312,8 +1315,8 @@ USDExporter::_exportMesh(pxr::SdfPath path,
         int index = 0;
 
         bool needWorkaround = true; // needed as of USD release 18.09
-        if (meshSubsets.size() < 100) {
-            // if we have less than 100, this will be performant
+        if (meshSubsets.size() < 500) {
+            // if we have less than 500 (pretty arbitrary), this will be performant
             needWorkaround = false;
         }
         if (needWorkaround) {
@@ -1380,6 +1383,7 @@ USDExporter::_ExportMeshes(const pxr::SdfPath parentPath) {
     if (_frontFaceTextureName.empty()) {
         frontMaterialsPath = pxr::SdfPath::EmptyPath();
     }
+    //std::cerr << "appending front " << frontSide << " to parentPath" << parentPath << std::endl;
     pxr::SdfPath frontPath = parentPath.AppendChild(pxr::TfToken(frontSide));
     _exportMesh(frontPath, _meshFrontFaceSubsets,
                 pxr::UsdGeomTokens->rightHanded,
