@@ -172,11 +172,12 @@ SU_HandleProgress(SketchUpPluginProgressCallback* callback,
 #pragma mark Portable (between Mac & Win) class to be subclassed
 
 USDExporterPlugin::USDExporterPlugin(): _exportNormals(false),
-                                           _aspectRatio(1.33),
-                                           _exportEdges(false),
-                                           _exportLines(false),
-                                           _exportCurves(false),
-                                           _exportToSingleFile(false) {
+                                        _aspectRatio(1.33),
+                                        _exportEdges(false),
+                                        _exportLines(false),
+                                        _exportCurves(false),
+                                        _exportToSingleFile(false),
+                                        _exportMaterials(true) {
 }
 
 USDExporterPlugin::~USDExporterPlugin() {
@@ -243,6 +244,10 @@ bool USDExporterPlugin::GetExportToSingleFile() {
     return _exportToSingleFile;
 }
 
+bool USDExporterPlugin::GetExportMaterials(){
+    return _exportMaterials;
+}
+
 void
 USDExporterPlugin::SetAspectRatio(double ratio) {
     _aspectRatio = ratio;
@@ -271,7 +276,11 @@ USDExporterPlugin::SetExportCurves(bool flag) {
 void
 USDExporterPlugin::SetExportToSingleFile(bool flag) {
     _exportToSingleFile = flag;
-    
+}
+
+void
+USDExporterPlugin::SetExportMaterials(bool flag) {
+    _exportMaterials = flag;
 }
 
 void
@@ -296,6 +305,7 @@ USDExporterPlugin::ConvertFromSkp(const std::string& inputSU,
         exporter.SetExportLines(_exportLines);
         exporter.SetExportCurves(_exportCurves);
         exporter.SetExportToSingleFile(_exportToSingleFile);
+        exporter.SetExportMaterials(_exportMaterials);
         converted = exporter.Convert(inputSU, outputUSD, callback);
     } catch (...) {
         converted = false;

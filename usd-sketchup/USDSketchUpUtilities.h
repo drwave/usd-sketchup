@@ -88,6 +88,7 @@ public:
     bool GetExportLines();
     bool GetExportCurves();
     bool GetExportToSingleFile();
+    bool GetExportMaterials();
 
     void SetAspectRatio(double ratio);
     void SetExportNormals(bool flag);
@@ -95,6 +96,7 @@ public:
     void SetExportLines(bool flag);
     void SetExportCurves(bool flag);
     void SetExportToSingleFile(bool flag);
+    void SetExportMaterials(bool flag);
 
     // The dialogs are platform dependent and should be
     // implemented by the subclass on Mac and Windows
@@ -122,6 +124,7 @@ private:
     bool _exportEdges;
     bool _exportLines;
     bool _exportToSingleFile;
+    bool _exportMaterials;
 };
 
 #endif /* USDSketchUpUtilities_h */

@@ -122,6 +122,7 @@ public:
     SET_STATE(exportCurvesCheck, _plugin->GetExportCurves());
     SET_STATE(exportNormalsCheck, _plugin->GetExportNormals());
     SET_STATE(exportSingleFileCheck, _plugin->GetExportToSingleFile());
+    SET_STATE(exportMaterialsCheck, _plugin->GetExportMaterials());
 }
 
 // Set the options from those selected in the dialog
@@ -131,7 +132,7 @@ public:
     _plugin->SetExportLines(GET_STATE(exportLinesCheck));
     _plugin->SetExportCurves(GET_STATE(exportCurvesCheck));
     _plugin->SetExportNormals(GET_STATE(exportNormalsCheck));
-    _plugin->SetExportToSingleFile(GET_STATE(exportSingleFileCheck));
+    _plugin->SetExportMaterials(GET_STATE(exportMaterialsCheck));
 }
 
 
@@ -200,6 +201,11 @@ public:
 - (IBAction)takeExportToSingleFile:(id)sender {
     BOOL flag = [sender intValue];
     _plugin->SetExportToSingleFile(flag);
+}
+
+- (IBAction)takeExportMaterials:(id)sender {
+    BOOL flag = [sender intValue];
+    _plugin->SetExportMaterials(flag);
 }
 
 @end

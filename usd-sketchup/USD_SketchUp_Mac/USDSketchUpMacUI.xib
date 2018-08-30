@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14313.3.2" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14313.13.2" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14313.3.2"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14313.13.2"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -12,6 +12,7 @@
                 <outlet property="exportCurvesCheck" destination="CdF-9B-rwv" id="3xQ-bi-KYn"/>
                 <outlet property="exportEdgesCheck" destination="dB2-LX-Da2" id="QuA-uw-Vmw"/>
                 <outlet property="exportLinesCheck" destination="Tpa-4C-aTy" id="HfU-at-HoI"/>
+                <outlet property="exportMaterialsCheck" destination="0kF-QY-BuM" id="mvB-yb-w81"/>
                 <outlet property="exportNormalsCheck" destination="SwC-ei-Vod" id="oSP-yq-1N9"/>
                 <outlet property="exportSingleFileCheck" destination="MUO-uP-JEf" id="M9V-ue-SfB"/>
                 <outlet property="optionsPanel" destination="7lF-kY-ffV" id="B09-pR-xnW"/>
@@ -78,11 +79,11 @@ DQ
         </window>
         <window title="Export USD Options" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="7lF-kY-ffV" userLabel="OptionsPanel" customClass="NSPanel">
             <windowStyleMask key="styleMask" titled="YES"/>
-            <rect key="contentRect" x="510" y="356" width="290" height="210"/>
+            <rect key="contentRect" x="510" y="356" width="290" height="215"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1680" height="1028"/>
             <value key="minSize" type="size" width="290" height="135"/>
             <view key="contentView" autoresizesSubviews="NO" id="BuE-Ox-AUV">
-                <rect key="frame" x="0.0" y="0.0" width="290" height="210"/>
+                <rect key="frame" x="0.0" y="0.0" width="290" height="215"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kMM-wf-Ewe">
@@ -135,6 +136,17 @@ Gw
                             <action selector="takeExportToSingleFile:" target="-2" id="ypI-A4-KDc"/>
                         </connections>
                     </button>
+                    <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0kF-QY-BuM">
+                        <rect key="frame" x="18" y="161" width="254" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="check" title="Export Materials" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="au9-3T-LBK">
+                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="takeExportMaterials:" target="-2" id="OOE-sx-CdF"/>
+                        </connections>
+                    </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CdF-9B-rwv">
                         <rect key="frame" x="18" y="99" width="254" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
@@ -169,7 +181,7 @@ Gw
                         </connections>
                     </button>
                     <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8Lo-NK-X0J">
-                        <rect key="frame" x="20" y="163" width="50" height="22"/>
+                        <rect key="frame" x="20" y="185" width="50" height="22"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="right" title="1" drawsBackground="YES" id="nIF-8x-nmq">
                             <font key="font" metaFont="system"/>
@@ -181,7 +193,7 @@ Gw
                         </connections>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="DJY-Yt-tHg">
-                        <rect key="frame" x="69" y="165" width="95" height="17"/>
+                        <rect key="frame" x="69" y="187" width="95" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title=":1  AspectRatio" id="zeB-Sn-32t">
                             <font key="font" metaFont="system"/>
@@ -191,7 +203,7 @@ Gw
                     </textField>
                 </subviews>
             </view>
-            <point key="canvasLocation" x="-497" y="-1101"/>
+            <point key="canvasLocation" x="-497" y="-1098.5"/>
         </window>
     </objects>
 </document>

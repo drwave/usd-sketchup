@@ -49,6 +49,7 @@ class USDExporterPluginMac;
     IBOutlet NSButton* exportLinesCheck;
     IBOutlet NSButton* exportEdgesCheck;
     IBOutlet NSButton* exportSingleFileCheck;
+    IBOutlet NSButton* exportMaterialsCheck;
     IBOutlet NSPanel* summaryPanel;
     IBOutlet NSTextView* summaryText;
     

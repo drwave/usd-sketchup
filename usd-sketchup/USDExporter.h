@@ -87,7 +87,8 @@ public:
     bool GetExportCurves() const;
     bool GetExportToSingleFile() const;
     bool GetExportARKitCompatibleUSDZ() const;
-    
+    bool GetExportMaterials() const;
+
     void SetSkpFileName(const std::string name);
     void SetUSDFileName(const std::string name);
     void SetExportNormals(bool flag);
@@ -96,6 +97,7 @@ public:
     void SetExportCurves(bool flag);
     void SetExportToSingleFile(bool flag);
     void SetExportARKitCompatibleUSDZ(bool flag);
+    void SetExportMaterials(bool flag);
 
     double GetAspectRatio() const;
     double GetSensorHeight() const;
@@ -139,6 +141,7 @@ private:
     bool _exportCurves;
     bool _exportToSingleFile;
     bool _exportARKitCompatibleUSDZ;
+    bool _exportMaterials;
     double _aspectRatio;
     double _sensorHeight;
     double _startFrame;

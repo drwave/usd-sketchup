@@ -122,6 +122,7 @@ USDExporter::USDExporter(): _model(SU_INVALID), _textureWriter(SU_INVALID) {
     SetExportCurves(true);
     SetExportToSingleFile(false);
     SetExportARKitCompatibleUSDZ(true);
+    SetExportMaterials(true);
     SetAspectRatio(16.0/9.0);
     SetSensorHeight(24.0);
     SetStartFrame(101.0);
@@ -278,6 +279,11 @@ USDExporter::GetExportARKitCompatibleUSDZ() const {
     return _exportARKitCompatibleUSDZ;
 }
 
+bool
+USDExporter::GetExportMaterials()const {
+    return _exportMaterials;
+}
+
 void
 USDExporter::_updateFileNames() {
     _baseFileName = _usdFileName;
@@ -346,6 +352,11 @@ void
 USDExporter::SetExportARKitCompatibleUSDZ(bool flag) {
     _exportARKitCompatibleUSDZ = flag;
     _updateFileNames();
+}
+
+void
+USDExporter::SetExportMaterials(bool flag) {
+    _exportMaterials = flag;
 }
 
 double
@@ -551,6 +562,16 @@ USDExporter::_countEntities(SUEntitiesRef entities) {
                 SUDrawingElementGetHidden(de, &isHidden);
                 if (isHidden) {
                     continue;
+                }
+                // need to find out what layer it's on, and make sure that layer
+                // is visible
+                SULayerRef layer;
+                SU_CALL(SUDrawingElementGetLayer(de, &layer));
+                bool visible = true;
+                SU_CALL(SULayerGetVisibility(layer, &visible));
+                if (!visible) {
+                    //std::cerr << cName << " is on a hidden layer - skipping" << std::endl;
+                    return false;
                 }
             }
             SU_CALL(SUComponentInstanceGetDefinition(instance, &definition));
@@ -775,6 +796,17 @@ USDExporter::_ExportGroup(const pxr::SdfPath parentPath, SUGroupRef group,
         if (isHidden) {
             return "";
         }
+        // need to find out what layer it's on, and make sure that layer
+        // is visible
+        SULayerRef layer;
+        SU_CALL(SUDrawingElementGetLayer(drawingElement, &layer));
+        bool visible = true;
+        SU_CALL(SULayerGetVisibility(layer, &visible));
+        if (!visible) {
+            //std::cerr << cName << " is on a hidden layer - skipping" << std::endl;
+            return "";
+        }
+
     }
     std::string groupName;
     std::string gName = GetGroupName(group);
@@ -948,11 +980,13 @@ USDExporter::_ExportMaterials(const pxr::SdfPath parentPath) {
     // we might have a single mesh that has many materials, many of which are
     // the same. Since SketchUp has such a simple material schema (just a
     // texture map), we want to coalesce these as much as possible.
-    for (MeshSubset& subset : _meshFrontFaceSubsets) {
-        index = _cacheTextureMaterial(path, subset, index);
-    }
-    for (MeshSubset& subset : _meshBackFaceSubsets) {
-        index = _cacheTextureMaterial(path, subset, index);
+    if (_exportMaterials) {
+        for (MeshSubset& subset : _meshFrontFaceSubsets) {
+            index = _cacheTextureMaterial(path, subset, index);
+        }
+        for (MeshSubset& subset : _meshBackFaceSubsets) {
+            index = _cacheTextureMaterial(path, subset, index);
+        }
     }
     //std::cerr << "There are " << _texturePathMaterialPath.size() << " unique materials for this mesh" << std::endl;
     return index;
@@ -1013,6 +1047,16 @@ USDExporter::_gatherFaceInfo(const pxr::SdfPath parentPath, SUFaceRef face) {
         bool isHidden = 0;
         SUDrawingElementGetHidden(drawingElement, &isHidden);
         if (isHidden) {
+            return 0;
+        }
+        // need to find out what layer it's on, and make sure that layer
+        // is visible
+        SULayerRef layer;
+        SU_CALL(SUDrawingElementGetLayer(drawingElement, &layer));
+        bool visible = true;
+        SU_CALL(SULayerGetVisibility(layer, &visible));
+        if (!visible) {
+            //std::cerr << cName << " is on a hidden layer - skipping" << std::endl;
             return 0;
         }
     }
@@ -1248,7 +1292,7 @@ USDExporter::_exportMesh(pxr::SdfPath path,
                                               pxr::SdfValueTypeNames->Float2Array,
                                               pxr::UsdGeomTokens->vertex);
     uvPrimvar.Set(uv);
-    if (!meshSubsets.size()) {
+    if (!meshSubsets.size() || !_exportMaterials) {
         // no materials - we're done
         return ;
     }
