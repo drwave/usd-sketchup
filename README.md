@@ -1,7 +1,7 @@
 Universal Scene Description Exporter for SketchUp
 =================================================
 
-This plug-in adds the ability to export [Universal Scene
+This plug-in adds the ability to export [Pixar's Universal Scene
 Description](http://openusd.org/docs/index.html) files from [SketchUp
 Pro](https://www.sketchup.com). It has been tested with SketchUp Pro 2016, 2017 and 2018.
 
@@ -97,11 +97,11 @@ installed. Then run the script. We recommend building without Python, without im
 > python USD/build_scripts/build_usd.py --build-args TBB,extra_inc=big_iron.inc --no-python --no-imaging --no-usdview --build-monolithic /opt/local/USDNoPythonNoImagingMonolithicIncludeTBB
 ```
 
-#### 3. Download the SketchUp SDK
+#### 4. Download the SketchUp SDK
 
-Once you login to the [Trimble/SketchUp developer account](https://extensions.sketchup.com/en/developer_center/sketchup_sdk) (*look in upper right corner*), download the [SDK](https://extensions.sketchup.com/en/developer_center/sketchup_sdk). Unzip and install this somewhere on your machine, for example, ```~/SketchUpSDKs/SDK_Mac_18-0-18665```
+Once you login to the [Trimble/SketchUp developer account](https://extensions.sketchup.com/en/developer_center/sketchup_sdk) (*look in upper right corner of that linked page*), download the [SDK](https://extensions.sketchup.com/en/developer_center/sketchup_sdk). Unzip and install this somewhere on your machine, for example, ```~/SketchUpSDKs/SDK_Mac_18-0-18665```
 
-#### 3. Download the USD SketchUp exporter plug-in source code
+#### 5. Download the USD SketchUp exporter plug-in source code
 
 You can download source code archives from [GitHub](https://www.github.com/drwave/usd-sketchup) or use ```git``` to clone the repository.
 
@@ -115,14 +115,15 @@ At the top level of the repository, make a link to the SketchUp SDK you installe
 > cd usd-sketchup
 > ln -s ~/SketchUpSDKs/SDK_Mac_18-0-18665 SDK_Mac
 ```
+#### 6. Build the USD SketchUp exporter
 
 Launch Xcode on the [project file](https://github.com/drwave/usd-sketchup/tree/master/usd-sketchup.xcodeproj). You may need to fix up various things in the Xcode file that are specific to your build if you have changed them (i.e. installed USD in a different location, have a different version of SketchUp installed, etc.).
 
 You will almost certainly have to update the **Development Team** in the Build Settings (**need a screenshot here**).
 
-The Xcode project assumes that you are building for SketchUp Pro 2018, and building the target will actually copy the resulting ```USDExporter.plugin``` into SketchUp Pro's app bundle in the PlugIns directory, i.e. ```/Applications/SketchUp\ 2018/SketchUp.app/Contents/PlugIns/```.
+The Xcode project assumes that you are building for **SketchUp Pro 2018**, and building the target will actually copy the resulting ```USDExporter.plugin``` into SketchUp Pro's app bundle in the PlugIns directory, i.e. ```/Applications/SketchUp\ 2018/SketchUp.app/Contents/PlugIns/```.
 
-Initially, that directory will probably not be writable on your machine, so you may want to make it writable:
+Initially, that directory will probably not be writable on your machine, so you will need to make it writable:
 
 ```
 > sudo chmod a+w /Applications/SketchUp\ 2018/SketchUp.app/Contents/PlugIns/
@@ -137,5 +138,3 @@ Contributing
 If you'd like to contribute to this USD plug-in (and we appreciate the help!), please see
 the [Contributing](http://openusd.org/docs/Contributing-to-USD.html) page in the
 documentation for more information.
-
-
