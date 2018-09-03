@@ -88,6 +88,8 @@ public:
     bool GetExportToSingleFile() const;
     bool GetExportARKitCompatibleUSDZ() const;
     bool GetExportMaterials() const;
+    bool GetExportMeshes() const;
+    bool GetExportCameras() const;
 
     void SetSkpFileName(const std::string name);
     void SetUSDFileName(const std::string name);
@@ -98,6 +100,8 @@ public:
     void SetExportToSingleFile(bool flag);
     void SetExportARKitCompatibleUSDZ(bool flag);
     void SetExportMaterials(bool flag);
+    void SetExportMeshes(bool flag);
+    void SetExportCameras(bool flag);
 
     double GetAspectRatio() const;
     double GetSensorHeight() const;
@@ -116,6 +120,8 @@ public:
     unsigned long long GetLinesCount();
     unsigned long long GetEdgesCount();
     unsigned long long GetCamerasCount();
+    unsigned long long GetMaterialsCount();
+    unsigned long long GetGeomSubsetsCount();
 
 private:
     bool _performExport(const std::string& skpFileName,
@@ -134,6 +140,8 @@ private:
     unsigned long long _linesCount;
     unsigned long long _curvesCount;
     unsigned long long _camerasCount;
+    unsigned long long _materialsCount;
+    unsigned long long _geomSubsetsCount;
 
     bool _exportNormals;
     bool _exportEdges;
@@ -142,6 +150,8 @@ private:
     bool _exportToSingleFile;
     bool _exportARKitCompatibleUSDZ;
     bool _exportMaterials;
+    bool _exportMeshes;
+    bool _exportCameras;
     double _aspectRatio;
     double _sensorHeight;
     double _startFrame;

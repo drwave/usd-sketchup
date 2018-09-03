@@ -82,13 +82,15 @@ public:
     std::string GetDescription(int index) const;
     bool SupportsOptions() const;
     double GetAspectRatio();
-    bool GetExportForPresto();
+    bool GetExportARKitCompatible();
     bool GetExportNormals();
     bool GetExportEdges();
     bool GetExportLines();
     bool GetExportCurves();
     bool GetExportToSingleFile();
     bool GetExportMaterials();
+    bool GetExportMeshes();
+    bool GetExportCameras();
 
     void SetAspectRatio(double ratio);
     void SetExportNormals(bool flag);
@@ -97,6 +99,9 @@ public:
     void SetExportCurves(bool flag);
     void SetExportToSingleFile(bool flag);
     void SetExportMaterials(bool flag);
+    void SetExportMeshes(bool flag);
+    void SetExportCameras(bool flag);
+    void SetExportARKitCompatible(bool flag);
 
     // The dialogs are platform dependent and should be
     // implemented by the subclass on Mac and Windows
@@ -125,6 +130,9 @@ private:
     bool _exportLines;
     bool _exportToSingleFile;
     bool _exportMaterials;
+    bool _exportMeshes;
+    bool _exportCameras;
+    bool _exportARKitCompatible;
 };
 
 #endif /* USDSketchUpUtilities_h */

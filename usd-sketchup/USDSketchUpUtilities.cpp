@@ -25,6 +25,9 @@
 //
 //  Created by Michael B. Johnson on 11/24/17.
 //
+#include <iostream>
+#include <locale>
+#include <string>
 
 #include "USDSketchUpUtilities.h"
 
@@ -171,13 +174,17 @@ SU_HandleProgress(SketchUpPluginProgressCallback* callback,
 
 #pragma mark Portable (between Mac & Win) class to be subclassed
 
-USDExporterPlugin::USDExporterPlugin(): _exportNormals(false),
+USDExporterPlugin::USDExporterPlugin(): _exportMeshes(true),
+                                        _exportCameras(true),
+                                        _exportMaterials(true),
+                                        _exportARKitCompatible(true),
+                                        _exportNormals(false),
                                         _aspectRatio(1.33),
                                         _exportEdges(false),
                                         _exportLines(false),
                                         _exportCurves(false),
-                                        _exportToSingleFile(false),
-                                        _exportMaterials(true) {
+                                        _exportToSingleFile(false)
+{
 }
 
 USDExporterPlugin::~USDExporterPlugin() {
@@ -220,32 +227,54 @@ USDExporterPlugin::SupportsOptions() const {
     return true;
 }
 
-double USDExporterPlugin::GetAspectRatio(){
+double
+USDExporterPlugin::GetAspectRatio(){
     return _aspectRatio;
 }
 
-bool USDExporterPlugin::GetExportNormals() {
+bool
+USDExporterPlugin::GetExportNormals() {
     return _exportNormals;
 }
 
-bool USDExporterPlugin::GetExportEdges() {
+bool
+USDExporterPlugin::GetExportEdges() {
     return _exportEdges;
 }
 
-bool USDExporterPlugin::GetExportCurves() {
+bool
+USDExporterPlugin::GetExportCurves() {
     return _exportCurves;
 }
 
-bool USDExporterPlugin::GetExportLines() {
+bool
+USDExporterPlugin::GetExportLines() {
     return _exportLines;
 }
 
-bool USDExporterPlugin::GetExportToSingleFile() {
+bool
+USDExporterPlugin::GetExportToSingleFile() {
     return _exportToSingleFile;
 }
 
-bool USDExporterPlugin::GetExportMaterials(){
+bool
+USDExporterPlugin::GetExportMaterials() {
     return _exportMaterials;
+}
+
+bool
+USDExporterPlugin::GetExportMeshes() {
+    return _exportMeshes;
+}
+
+bool
+USDExporterPlugin::GetExportCameras() {
+    return _exportCameras;
+}
+
+bool
+USDExporterPlugin::GetExportARKitCompatible() {
+    return _exportMeshes;
 }
 
 void
@@ -284,6 +313,21 @@ USDExporterPlugin::SetExportMaterials(bool flag) {
 }
 
 void
+USDExporterPlugin::SetExportMeshes(bool flag) {
+    _exportMaterials = flag;
+}
+
+void
+USDExporterPlugin::SetExportCameras(bool flag) {
+    _exportCameras = flag;
+}
+
+void
+USDExporterPlugin::SetExportARKitCompatible(bool flag) {
+    _exportARKitCompatible = flag;
+}
+
+void
 USDExporterPlugin::ShowSummaryDialog()  {
     if (!_summaryStr.empty()) {
         ShowSummaryDialog(_summaryStr);
@@ -306,6 +350,9 @@ USDExporterPlugin::ConvertFromSkp(const std::string& inputSU,
         exporter.SetExportCurves(_exportCurves);
         exporter.SetExportToSingleFile(_exportToSingleFile);
         exporter.SetExportMaterials(_exportMaterials);
+        exporter.SetExportMeshes(_exportMeshes);
+        exporter.SetExportCameras(_exportCameras);
+        exporter.SetExportARKitCompatibleUSDZ(_exportARKitCompatible);
         converted = exporter.Convert(inputSU, outputUSD, callback);
     } catch (...) {
         converted = false;
@@ -315,74 +362,106 @@ USDExporterPlugin::ConvertFromSkp(const std::string& inputSU,
     return converted;
 }
 
+// class to make sure we add commas for thousands regardless of language
+class comma_numpunct : public std::numpunct<char> {
+protected:
+    virtual char do_thousands_sep() const {
+        return ',';
+    }
+    virtual std::string do_grouping() const {
+        return "\03";
+    }
+};
+
 void
 USDExporterPlugin::_updateSummaryFromExporter(USDExporter& exporter) {
     unsigned long long count = exporter.GetComponentDefinitionCount();
-    std::string msg;
+    std::locale comma_locale(std::locale(), new comma_numpunct());
+    std::stringstream ss;
+    ss.imbue(comma_locale);
+    
     if (count) {
-        msg += std::string("Exported ") + std::to_string(count);
+        ss << std::string("Exported ") << count;
         if (count == 1) {
-            msg += " Component Definition\n";
+            ss << " Component Definition\n";
         } else {
-            msg += " Component Definitions\n";
+            ss << " Component Definitions\n";
         }
     }
     count = exporter.GetComponentInstanceCount();
     if (count) {
-        msg += std::string("Exported ") + std::to_string(count);
+        ss << std::string("Exported ") << count;
         if (count == 1) {
-            msg += " Component Instance\n";
+            ss << " Component Instance\n";
         } else {
-            msg += " Component Instances\n";
+            ss << " Component Instances\n";
         }
     }
     count = exporter.GetMeshCount();
     if (count) {
-        msg += std::string("Exported ") + std::to_string(count);
+        ss << std::string("Exported ") << count;
         if (count == 1) {
-            msg += " Mesh\n";
+            ss << " Mesh\n";
         } else {
-            msg += " Meshes\n";
+            ss << " Meshes\n";
+        }
+    }
+    count = exporter.GetMaterialsCount();
+    if (count) {
+        ss << std::string("Exported ") << count;
+        if (count == 1) {
+            ss << " Material\n";
+        } else {
+            ss << " Materials\n";
+        }
+    }
+    count = exporter.GetGeomSubsetsCount();
+    if (count) {
+        ss << std::string("\tExported ") << count;
+        if (count == 1) {
+            ss << " GeomSubset\n";
+        } else {
+            ss << " GeomSubsets\n";
         }
     }
     count = exporter.GetEdgesCount();
     if (count) {
-        msg += std::string("Exported ") + std::to_string(count);
+        ss << std::string("Exported ") << count;
         if (count == 1) {
-            msg += " Edge\n";
+            ss << " Edge\n";
         } else {
-            msg += " Edges\n";
+            ss << " Edges\n";
         }
     }
     count = exporter.GetLinesCount();
     if (count) {
-        msg += std::string("Exported ") + std::to_string(count);
+        ss << std::string("Exported ") << count;
         if (count == 1) {
-            msg += " PolyLine\n";
+            ss << " PolyLine\n";
         } else {
-            msg += " PolyLines\n";
+            ss << " PolyLines\n";
         }
     }
     count = exporter.GetCurvesCount();
     if (count) {
-        msg += std::string("Exported ") + std::to_string(count);
+        ss << std::string("Exported ") << count;
         if (count == 1) {
-            msg += " Curve\n";
+            ss << " Curve\n";
         } else {
-            msg += " Curves\n";
+            ss << " Curves\n";
         }
     }
     count = exporter.GetCamerasCount();
     if (count) {
-        msg += std::string("Exported ") + std::to_string(count);
+        ss << std::string("Exported ") << count;
         if (count == 1) {
-            msg += " Camera\n";
+            ss << " Camera\n";
         } else {
-            msg += " Cameras\n";
+            ss << " Cameras\n";
         }
-        msg += "  (w/aspect ratio of ";
-        msg += std::to_string(_aspectRatio);
-        msg += ")\n";
+        ss << "  (w/aspect ratio of ";
+        ss << std::to_string(_aspectRatio);
+        ss << ")\n";
     }
-    _summaryStr = msg;
+    _summaryStr = ss.str();
 }

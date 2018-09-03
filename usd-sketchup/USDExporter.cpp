@@ -116,13 +116,15 @@ MeshSubset::SetMaterialPath(pxr::SdfPath path) {
 USDExporter::USDExporter(): _model(SU_INVALID), _textureWriter(SU_INVALID) {
     SUInitialize();
     SU_CALL(SUTextureWriterCreate(&_textureWriter));
+    SetExportMeshes(true);
+    SetExportCameras(true);
+    SetExportMaterials(true);
     SetExportNormals(false);
     SetExportEdges(true);
     SetExportLines(true);
     SetExportCurves(true);
     SetExportToSingleFile(false);
     SetExportARKitCompatibleUSDZ(true);
-    SetExportMaterials(true);
     SetAspectRatio(16.0/9.0);
     SetSensorHeight(24.0);
     SetStartFrame(101.0);
@@ -160,6 +162,8 @@ USDExporter::_performExport(const std::string& skpSrc,
     _linesCount = 0;
     _curvesCount = 0;
     _camerasCount = 0;
+    _materialsCount = 0;
+    _geomSubsetsCount = 0;
     _filePathsForZip.clear();
     
     _exportingUSDZ = false;
@@ -180,6 +184,10 @@ USDExporter::_performExport(const std::string& skpSrc,
         // we want to add the USD files without their full path
         std::string fileNameOnly = pxr::TfGetBaseName(_baseFileName);
         _filePathsForZip.insert(fileNameOnly);
+        // if we're exporting USDZ, we're first going to create a .usdc file
+        // and then a texture directory. We should create those in a tmp
+        // directory. There are probably Tf* functions will help us get
+        // a tmp directory...
     }
 
     UsdGeomSetStageUpAxis(_stage, pxr::UsdGeomTokens->z); // SketchUp is Z-up
@@ -198,7 +206,10 @@ USDExporter::_performExport(const std::string& skpSrc,
         << std::endl;
     }
     pxr::SdfPath path(parentPath + safeBaseNameNoExt);
-    _ExportTextures(path); // do this first so we know our _textureDirectory
+    if (GetExportMaterials()) {
+        // only do this if we're exporting materials
+        _ExportTextures(path); // do this first so we know our _textureDirectory
+    }
     pxr::SdfPath parentPathS(parentPath);
     _ExportComponentDefinitions(parentPathS);
     auto primSchema = pxr::UsdGeomXform::Define(_stage,
@@ -207,7 +218,9 @@ USDExporter::_performExport(const std::string& skpSrc,
     pxr::UsdPrim prim = primSchema.GetPrim();
     prim.SetMetadata(pxr::SdfFieldKeys->Kind, pxr::KindTokens->assembly);
     _ExportGeom(path);
-    _ExportCameras(path);
+    if (GetExportCameras()) {
+        _ExportCameras(path);
+    }
     _stage->Save();
     
     if (_exportingUSDZ) {
@@ -282,6 +295,16 @@ USDExporter::GetExportARKitCompatibleUSDZ() const {
 bool
 USDExporter::GetExportMaterials()const {
     return _exportMaterials;
+}
+
+bool
+USDExporter::GetExportMeshes()const {
+    return _exportMeshes;
+}
+
+bool
+USDExporter::GetExportCameras()const {
+    return _exportCameras;
 }
 
 void
@@ -359,6 +382,16 @@ USDExporter::SetExportMaterials(bool flag) {
     _exportMaterials = flag;
 }
 
+void
+USDExporter::SetExportMeshes(bool flag) {
+    _exportMeshes = flag;
+}
+
+void
+USDExporter::SetExportCameras(bool flag) {
+    _exportCameras = flag;
+}
+
 double
 USDExporter::GetSensorHeight() const {
     return _sensorHeight;
@@ -432,6 +465,16 @@ USDExporter::GetCurvesCount() {
 unsigned long long
 USDExporter::GetCamerasCount() {
     return _camerasCount;
+}
+
+unsigned long long
+USDExporter::GetMaterialsCount() {
+    return _materialsCount;
+}
+
+unsigned long long
+USDExporter::GetGeomSubsetsCount() {
+    return _geomSubsetsCount;
 }
 
 #pragma mark Components:
@@ -660,7 +703,9 @@ USDExporter::_ExportEntities(const pxr::SdfPath parentPath,
                              SUEntitiesRef entities) {
     _ExportInstances(parentPath, entities);
     _ExportGroups(parentPath, entities);
-    _ExportFaces(parentPath, entities);
+    if (GetExportMeshes()) {
+        _ExportFaces(parentPath, entities);
+    }
     if (GetExportEdges()) {
         _ExportEdges(parentPath, entities);
     }
@@ -876,7 +921,7 @@ USDExporter::_clearFacesExport() {
 void
 USDExporter::_ExportMaterial(const pxr::SdfPath path,
                              std::string texturePath) {
-    
+    _materialsCount++;
     pxr::UsdShadeMaterial mSchema = pxr::UsdShadeMaterial::Define(_stage,
                                                                   pxr::SdfPath(path));
     auto materialSurface = mSchema.CreateOutput(pxr::TfToken("surface"),
@@ -1031,13 +1076,21 @@ USDExporter::_ExportFaces(const pxr::SdfPath parentPath,
         }
     }
     if (exportedFaceCount) {
-        // if we exported any materials, then we should export two copies of
-        // the mesh, one facing forward and one facing backwards.
-        if (_ExportMaterials(parentPath)) {
-            _ExportMeshes(parentPath);
+        if (GetExportMaterials()) {
+            // if we exported any materials, then we should export two copies of
+            // the mesh, one facing forward and one facing backwards.
+            if (_ExportMaterials(parentPath)) {
+                _ExportMeshes(parentPath);
+            } else {
+                // if we didn't export any materials, we should just export a single
+                // double-sided copy of the mesh
+                _ExportDoubleSidedMesh(parentPath);
+            }
         } else {
-            // if we didn't export any materials, we should just export a single
-            // double-sided copy of the mesh
+            // if we're not exporting any materials, we should pick whether
+            // we want to export our normal pair of front & back facing
+            // meshes, or if we just want to export a single double-sided mesh.
+            // Eventually this should (maybe?) be a flag, but for now:
             _ExportDoubleSidedMesh(parentPath);
         }
     }
@@ -1343,6 +1396,7 @@ USDExporter::_exportMesh(pxr::SdfPath path,
         }
         index = 0;
         for (MeshSubset& meshSubset : meshSubsets) {
+            _geomSubsetsCount++;
             std::string subsetName = subsetBaseName;
             if (index != 0) {
                 subsetName += "_" + std::to_string(index);

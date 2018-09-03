@@ -50,6 +50,9 @@ class USDExporterPluginMac;
     IBOutlet NSButton* exportEdgesCheck;
     IBOutlet NSButton* exportSingleFileCheck;
     IBOutlet NSButton* exportMaterialsCheck;
+    IBOutlet NSButton* exportMeshesCheck;
+    IBOutlet NSButton* exportCamerasCheck;
+    IBOutlet NSButton* exportARKitCompatibleCheck;
     IBOutlet NSPanel* summaryPanel;
     IBOutlet NSTextView* summaryText;
     

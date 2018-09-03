@@ -123,6 +123,9 @@ public:
     SET_STATE(exportNormalsCheck, _plugin->GetExportNormals());
     SET_STATE(exportSingleFileCheck, _plugin->GetExportToSingleFile());
     SET_STATE(exportMaterialsCheck, _plugin->GetExportMaterials());
+    SET_STATE(exportMeshesCheck, _plugin->GetExportMeshes());
+    SET_STATE(exportCamerasCheck, _plugin->GetExportCameras());
+    SET_STATE(exportARKitCompatibleCheck, _plugin->GetExportARKitCompatible());
 }
 
 // Set the options from those selected in the dialog
@@ -133,8 +136,10 @@ public:
     _plugin->SetExportCurves(GET_STATE(exportCurvesCheck));
     _plugin->SetExportNormals(GET_STATE(exportNormalsCheck));
     _plugin->SetExportMaterials(GET_STATE(exportMaterialsCheck));
+    _plugin->SetExportMeshes(GET_STATE(exportMeshesCheck));
+    _plugin->SetExportCameras(GET_STATE(exportCamerasCheck));
+    _plugin->SetExportARKitCompatible(GET_STATE(exportARKitCompatibleCheck));
 }
-
 
 // Close the a panel started with [NSApp runModalForWindow:]
 - (IBAction)closePanel:(id)sender {
@@ -208,6 +213,19 @@ public:
     _plugin->SetExportMaterials(flag);
 }
 
+- (IBAction)takeExportMeshes:(id)sender {
+    BOOL flag = [sender intValue];
+    _plugin->SetExportMeshes(flag);
+}
+
+- (IBAction)takeExportCameras:(id)sender {
+    BOOL flag = [sender intValue];
+    _plugin->SetExportCameras(flag);
+}
+
+- (IBAction)takeARKitCompatible:(id)sender {
+    BOOL flag = [sender intValue];
+    _plugin->SetExportARKitCompatible(flag);
+}
+
 @end
-
-
