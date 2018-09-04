@@ -34,6 +34,7 @@
 #include "USDSketchUpUtilities.h"
 
 #include "pxr/base/arch/systemInfo.h"
+#include "pxr/base/arch/fileSystem.h"
 #include "pxr/base/tf/setenv.h"
 #include "pxr/base/tf/stringUtils.h"
 #include "pxr/base/tf/envSetting.h"
@@ -185,9 +186,8 @@ USDExporter::_performExport(const std::string& skpSrc,
         std::string fileNameOnly = pxr::TfGetBaseName(_baseFileName);
         _filePathsForZip.insert(fileNameOnly);
         // if we're exporting USDZ, we're first going to create a .usdc file
-        // and then a texture directory. We should create those in a tmp
-        // directory. There are probably Tf* functions will help us get
-        // a tmp directory...
+        // and then a texture directory. We will create those in a tmp
+        // directory. All that machinery is hidden when the name is set.
     }
 
     UsdGeomSetStageUpAxis(_stage, pxr::UsdGeomTokens->z); // SketchUp is Z-up
@@ -314,16 +314,20 @@ USDExporter::_updateFileNames() {
     std::string path = pxr::TfGetPathName(_usdFileName);
     std::string base = pxr::TfGetBaseName(_usdFileName);
     std::string baseNoExt = pxr::TfStringGetBeforeSuffix(base);
+    _textureDirectory = std::string(path + baseNoExt + "_textures");
+    
     _exportingUSDZ = false;
     if (ext == "usdz") {
         _exportingUSDZ = true;
         _zipFileName = path + baseNoExt + ".usdz";
+        std::string tmpPath(pxr::ArchGetTmpDir());
+        _baseFileName = tmpPath + baseNoExt + ".usdc";
+        _textureDirectory = std::string(tmpPath + baseNoExt + "_textures");
         if (GetExportARKitCompatibleUSDZ()) {
             // note: if we're exporting USDZ, for now, to be ARKit compatible,
             // they want a single binary USD file, so we will flip that switch
             // Also, ARKit expects the one and only USD file in there to end w/c
             _exportToSingleFile = true;
-            _baseFileName = path + baseNoExt + ".usdc";
         }
         return ;
     }
@@ -646,11 +650,8 @@ USDExporter::_countEntities(SUEntitiesRef entities) {
 
 void
 USDExporter::_ExportTextures(const pxr::SdfPath parentPath) {
-    std::string path = pxr::TfGetPathName(_usdFileName);
-    std::string base = pxr::TfGetBaseName(_usdFileName);
-    std::string baseNoExt = pxr::TfStringGetBeforeSuffix(base);
-    _textureDirectory = std::string(path + baseNoExt + "_textures");
-    
+    // note: if this is a usdz file, we put the textureDirectory
+    // into the tmp dir we're writing the usdc to
     USDTextureHelper textureHelper;
     if (!textureHelper.LoadAllTextures(_model, _textureWriter, false)) {
         return ;
@@ -663,7 +664,9 @@ USDExporter::_ExportTextures(const pxr::SdfPath parentPath) {
         << _textureDirectory << std::endl;
         return ;
     }
-    _textureDirectory = std::string(baseNoExt + "_textures");
+    // at the end, we cut down the texture directory name here for referencing
+    // we just want the directory, not the whole path
+    _textureDirectory = pxr::TfGetBaseName(_textureDirectory);
 }
 
 void
