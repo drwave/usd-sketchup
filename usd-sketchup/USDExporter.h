@@ -122,6 +122,7 @@ public:
     unsigned long long GetCamerasCount();
     unsigned long long GetMaterialsCount();
     unsigned long long GetGeomSubsetsCount();
+    std::string GetExportTimeSummary();
 
 private:
     bool _performExport(const std::string& skpFileName,
@@ -142,6 +143,7 @@ private:
     unsigned long long _camerasCount;
     unsigned long long _materialsCount;
     unsigned long long _geomSubsetsCount;
+    std::string _exportTimeSummary;
 
     bool _exportNormals;
     bool _exportEdges;

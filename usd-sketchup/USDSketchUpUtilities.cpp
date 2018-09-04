@@ -463,5 +463,8 @@ USDExporterPlugin::_updateSummaryFromExporter(USDExporter& exporter) {
         ss << std::to_string(_aspectRatio);
         ss << ")\n";
     }
+    // finally, get the string w/the export time info:
+    ss << exporter.GetExportTimeSummary();
+    
     _summaryStr = ss.str();
 }

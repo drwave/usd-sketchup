@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4015BDF6213EE6190087C32C /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4015BDF5213EE6190087C32C /* main.cpp */; };
+		4015BDFC213EE6EB0087C32C /* USDExporter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4052B65A212F6F76002B6746 /* USDExporter.cpp */; };
+		4015BDFD213EE6EE0087C32C /* USDSketchUpUtilities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4052B668212F6F9D002B6746 /* USDSketchUpUtilities.cpp */; };
+		4015BDFE213EE6F20087C32C /* USDTextureHelper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4052B667212F6F9D002B6746 /* USDTextureHelper.cpp */; };
+		4015BDFF213EE7230087C32C /* libusd_ms.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 40B15AF82138AC03008C1A12 /* libusd_ms.dylib */; };
+		4015BE00213EE7350087C32C /* SketchUpAPI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 40E8C3132130835000217059 /* SketchUpAPI.framework */; };
 		4052B65B212F6F76002B6746 /* USDExporter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4052B65A212F6F76002B6746 /* USDExporter.cpp */; };
 		4052B662212F6F81002B6746 /* USDSketchUpMacUI.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4052B65E212F6F81002B6746 /* USDSketchUpMacUI.xib */; };
 		4052B664212F6F81002B6746 /* SUToUSDPlugin.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4052B660212F6F81002B6746 /* SUToUSDPlugin.mm */; };
@@ -18,6 +24,16 @@
 		40E8C3142130835000217059 /* SketchUpAPI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 40E8C3132130835000217059 /* SketchUpAPI.framework */; };
 		40E8C322213091F900217059 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 40E8C321213091F900217059 /* README.md */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		4015BDFA213EE6200087C32C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4052B648212F6EAC002B6746 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4052B64F212F6EAC002B6746;
+			remoteInfo = USDExporter;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		40E8C31C21308A7D00217059 /* Copy USD libraries to plug-in bundle's Frameworks directory */ = {
@@ -34,6 +50,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4015BDF3213EE6190087C32C /* skp2usd */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = skp2usd; sourceTree = BUILT_PRODUCTS_DIR; };
+		4015BDF5213EE6190087C32C /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		4052B650212F6EAC002B6746 /* USDExporter.plugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = USDExporter.plugin; sourceTree = BUILT_PRODUCTS_DIR; };
 		4052B659212F6F70002B6746 /* USDExporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = USDExporter.h; sourceTree = "<group>"; };
 		4052B65A212F6F76002B6746 /* USDExporter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = USDExporter.cpp; sourceTree = "<group>"; };
@@ -52,6 +70,15 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		4015BDF0213EE6190087C32C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4015BE00213EE7350087C32C /* SketchUpAPI.framework in Frameworks */,
+				4015BDFF213EE7230087C32C /* libusd_ms.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		4052B64D212F6EAC002B6746 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -65,11 +92,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		4015BDF4213EE6190087C32C /* skp2usd */ = {
+			isa = PBXGroup;
+			children = (
+				4015BDF5213EE6190087C32C /* main.cpp */,
+			);
+			path = skp2usd;
+			sourceTree = "<group>";
+		};
 		4052B647212F6EAC002B6746 = {
 			isa = PBXGroup;
 			children = (
 				40E8C321213091F900217059 /* README.md */,
 				4052B652212F6EAC002B6746 /* usd-sketchup */,
+				4015BDF4213EE6190087C32C /* skp2usd */,
 				4052B651212F6EAC002B6746 /* Products */,
 				40E8C3102130833E00217059 /* Frameworks */,
 			);
@@ -79,6 +115,7 @@
 			isa = PBXGroup;
 			children = (
 				4052B650212F6EAC002B6746 /* USDExporter.plugin */,
+				4015BDF3213EE6190087C32C /* skp2usd */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -121,6 +158,25 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		4015BDF2213EE6190087C32C /* skp2usd */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4015BDF9213EE6190087C32C /* Build configuration list for PBXNativeTarget "skp2usd" */;
+			buildPhases = (
+				4015BDEF213EE6190087C32C /* Sources */,
+				4015BDF0213EE6190087C32C /* Frameworks */,
+				4015BE02213EE79B0087C32C /* Copy Binary to Installed Plug-In Location */,
+				4015BE03213EE9A70087C32C /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4015BDFB213EE6200087C32C /* PBXTargetDependency */,
+			);
+			name = skp2usd;
+			productName = skp2usd;
+			productReference = 4015BDF3213EE6190087C32C /* skp2usd */;
+			productType = "com.apple.product-type.tool";
+		};
 		4052B64F212F6EAC002B6746 /* USDExporter */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 4052B656212F6EAC002B6746 /* Build configuration list for PBXNativeTarget "USDExporter" */;
@@ -148,9 +204,13 @@
 		4052B648212F6EAC002B6746 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastSwiftUpdateCheck = 1000;
 				LastUpgradeCheck = 1000;
 				ORGANIZATIONNAME = "Michael B. Johnson";
 				TargetAttributes = {
+					4015BDF2213EE6190087C32C = {
+						CreatedOnToolsVersion = 10.0;
+					};
 					4052B64F212F6EAC002B6746 = {
 						CreatedOnToolsVersion = 10.0;
 					};
@@ -169,6 +229,7 @@
 			projectRoot = "";
 			targets = (
 				4052B64F212F6EAC002B6746 /* USDExporter */,
+				4015BDF2213EE6190087C32C /* skp2usd */,
 			);
 		};
 /* End PBXProject section */
@@ -186,6 +247,41 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		4015BE02213EE79B0087C32C /* Copy Binary to Installed Plug-In Location */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Copy Binary to Installed Plug-In Location";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cp ${BUILT_PRODUCTS_DIR}/${EXECUTABLE_NAME} /Applications/SketchUp\\ 2018/SketchUp.app/Contents/PlugIns/USDExporter.plugin/Contents/MacOS/\necho \"cp ${BUILT_PRODUCTS_DIR}/${EXECUTABLE_NAME} /Applications/SketchUp\\ 2018/SketchUp.app/Contents/PlugIns/USDExporter.plugin/Contents/MacOS/\"\necho \"copied binary to SketchUp 2018 USDExporter PlugIn\"\n";
+		};
+		4015BE03213EE9A70087C32C /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# rewrite usd reference in plugin\nplugIn=\"${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}\"\nusd=libusd_ms.dylib\nold=@rpath/${usd}\nnew=@loader_path/../Frameworks/${usd}\necho \"/usr/bin/install_name_tool -change $old $new $plugIn\"\n/usr/bin/install_name_tool -change $old $new $plugIn\n";
+		};
 		40E8C31B21308A2600217059 /* Copy USD plugin info to plug-in bundle */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -234,6 +330,17 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		4015BDEF213EE6190087C32C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4015BDF6213EE6190087C32C /* main.cpp in Sources */,
+				4015BDFC213EE6EB0087C32C /* USDExporter.cpp in Sources */,
+				4015BDFD213EE6EE0087C32C /* USDSketchUpUtilities.cpp in Sources */,
+				4015BDFE213EE6F20087C32C /* USDTextureHelper.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		4052B64C212F6EAC002B6746 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -247,7 +354,49 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		4015BDFB213EE6200087C32C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4052B64F212F6EAC002B6746 /* USDExporter */;
+			targetProxy = 4015BDFA213EE6200087C32C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		4015BDF7213EE6190087C32C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = QS29RJP6TK;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 4.2;
+			};
+			name = Debug;
+		};
+		4015BDF8213EE6190087C32C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = QS29RJP6TK;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 4.2;
+			};
+			name = Release;
+		};
 		4052B654212F6EAC002B6746 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -432,6 +581,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		4015BDF9213EE6190087C32C /* Build configuration list for PBXNativeTarget "skp2usd" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4015BDF7213EE6190087C32C /* Debug */,
+				4015BDF8213EE6190087C32C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		4052B64B212F6EAC002B6746 /* Build configuration list for PBXProject "usd-sketchup" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

@@ -60,6 +60,20 @@
 #include "pxr/usd/usdShade/shader.h"
 #include "pxr/usd/usdShade/material.h"
 
+#include <sys/time.h>
+
+double _getCurrentTime_() {
+    struct timeval v;
+    double seconds;
+    double useconds;
+    
+    gettimeofday(&v, NULL);
+    seconds = v.tv_sec;
+    useconds = (1.0e-6) * v.tv_usec;
+    seconds += useconds;
+    return seconds;
+}
+
 // SketchUp thinks in inches, we want centimeters
 static double inchesToCM = 2.54;
 // SketchUp's default frontface color
@@ -154,6 +168,14 @@ USDExporter::Convert(const std::string& skpSrc, const std::string& usdDst,
 bool
 USDExporter::_performExport(const std::string& skpSrc,
                             const std::string& usdDst) {
+    double startTime = _getCurrentTime_();
+    double geomTime = 0.0;
+    double texturesTime = 0.0;
+    double componentsTime = 0.0;
+    double camerasTime = 0.0;
+    double usdzTime = 0.0;
+    double exportTime = 0.0;
+    
     // these values will get updated while we do the export, and will be
     // used by the summary text presented to the user at the end of the export.
     _componentDefinitionCount = 0;
@@ -166,6 +188,7 @@ USDExporter::_performExport(const std::string& skpSrc,
     _materialsCount = 0;
     _geomSubsetsCount = 0;
     _filePathsForZip.clear();
+    _exportTimeSummary.clear();
     
     _exportingUSDZ = false;
     SetSkpFileName(skpSrc);
@@ -208,22 +231,34 @@ USDExporter::_performExport(const std::string& skpSrc,
     pxr::SdfPath path(parentPath + safeBaseNameNoExt);
     if (GetExportMaterials()) {
         // only do this if we're exporting materials
+        double startTimeTextures = _getCurrentTime_();
         _ExportTextures(path); // do this first so we know our _textureDirectory
+        texturesTime = _getCurrentTime_() - startTimeTextures;
     }
     pxr::SdfPath parentPathS(parentPath);
+    double startTimeComponents = _getCurrentTime_();
     _ExportComponentDefinitions(parentPathS);
+    componentsTime = _getCurrentTime_() - startTimeComponents;
+
     auto primSchema = pxr::UsdGeomXform::Define(_stage,
                                                 pxr::SdfPath(path));
     _stage->SetDefaultPrim(primSchema.GetPrim());
     pxr::UsdPrim prim = primSchema.GetPrim();
     prim.SetMetadata(pxr::SdfFieldKeys->Kind, pxr::KindTokens->assembly);
+
+    double startTimeGeom = _getCurrentTime_();
     _ExportGeom(path);
+    geomTime =  _getCurrentTime_() - startTimeGeom;
+
     if (GetExportCameras()) {
+        double startTimeCameras = _getCurrentTime_();
         _ExportCameras(path);
+        camerasTime = _getCurrentTime_() - startTimeCameras;
     }
     _stage->Save();
     
     if (_exportingUSDZ) {
+        double startTimeUSDZ = _getCurrentTime_();
         if (GetExportARKitCompatibleUSDZ()) {
             pxr::SdfAssetPath p = pxr::SdfAssetPath(_stage->GetRootLayer()->GetRealPath());
             pxr::ArGetResolver().CreateDefaultContextForAsset(p.GetAssetPath());
@@ -241,6 +276,31 @@ USDExporter::_performExport(const std::string& skpSrc,
             }
             zipWriter.Save();
         }
+        usdzTime = _getCurrentTime_() - startTimeUSDZ;
+    }
+    exportTime = _getCurrentTime_() - startTime;
+    char buffer[256];
+    sprintf(buffer, "USD Export took %3.2lf secs:\n", exportTime);
+    _exportTimeSummary += std::string(buffer);
+    if (texturesTime > 1.0) {
+        sprintf(buffer, "\tTextures Export took %3.2lf secs\n", texturesTime);
+        _exportTimeSummary += std::string(buffer);
+    }
+    if (componentsTime > 1.0) {
+        sprintf(buffer, "\tComponents Export took %3.2lf secs\n", componentsTime);
+        _exportTimeSummary += std::string(buffer);
+    }
+    if (geomTime > 1.0) {
+        sprintf(buffer, "\tScene Geometry Export took %3.2lf secs\n", geomTime);
+        _exportTimeSummary += std::string(buffer);
+    }
+    if (camerasTime > 1.0) {
+        sprintf(buffer, "\tCameras Export took %3.2lf secs\n", camerasTime);
+        _exportTimeSummary += std::string(buffer);
+    }
+    if (usdzTime > 1.0) {
+        sprintf(buffer, "\tUSDZ Export took %3.2lf secs\n", usdzTime);
+        _exportTimeSummary += std::string(buffer);
     }
 
     if (!SUIsInvalid(_model)) {
@@ -479,6 +539,11 @@ USDExporter::GetMaterialsCount() {
 unsigned long long
 USDExporter::GetGeomSubsetsCount() {
     return _geomSubsetsCount;
+}
+
+std::string
+USDExporter::GetExportTimeSummary() {
+    return _exportTimeSummary;
 }
 
 #pragma mark Components:
