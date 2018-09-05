@@ -50,6 +50,8 @@
 #include "pxr/usd/usdGeom/camera.h"
 #include "pxr/usd/usdGeom/mesh.h"
 #include "pxr/usd/usdGeom/xform.h"
+#include "pxr/usd/usdShade/shader.h"
+#include "pxr/usd/usdShade/material.h"
 
 class MeshSubset {
 public:
@@ -261,8 +263,18 @@ private:
     std::string _ExportGroup(const pxr::SdfPath parentPath, SUGroupRef group,
                              std::set<std::string>& usedGroupNames);
 
-    void _ExportMaterial(const pxr::SdfPath parentPath,
-                         std::string texturePath);
+    pxr::UsdShadeInput _exportPreviewShader(const pxr::SdfPath path,
+                                            pxr::UsdShadeOutput materialSurface);
+    pxr::UsdShadeOutput _exportSTPrimvarShader(const pxr::SdfPath path,
+                                               pxr::UsdShadeOutput materialSurface);
+    void _exportTextureShader(const pxr::SdfPath path,
+                              std::string texturePath,
+                              pxr::UsdShadeOutput result,
+                              pxr::UsdShadeInput diffuseColor);
+    void _ExportTextureMaterial(const pxr::SdfPath parentPath,
+                                std::string texturePath);
+    void _ExportDisplayMaterial(const pxr::SdfPath parentPath,
+                                pxr::GfVec3f rgb, float a);
     bool _ExportMaterials(const pxr::SdfPath parentPath);
     void _ExportFaces(const pxr::SdfPath parentPath, SUEntitiesRef entities);
     size_t _gatherFaceInfo(const pxr::SdfPath parentPath, SUFaceRef face);

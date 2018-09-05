@@ -984,67 +984,68 @@ USDExporter::_clearFacesExport() {
     _texturePathMaterialPath.clear();
 }
 
-// need to implement a private function for setting up
-// each of the shaders
-void
-USDExporter::_ExportMaterial(const pxr::SdfPath path,
-                             std::string texturePath) {
-    _materialsCount++;
-    pxr::UsdShadeMaterial mSchema = pxr::UsdShadeMaterial::Define(_stage,
-                                                                  pxr::SdfPath(path));
-    auto materialSurface = mSchema.CreateOutput(pxr::TfToken("surface"),
-                                                pxr::SdfValueTypeNames->Token);
-
-    pxr::SdfPath s1Path = path.AppendChild(pxr::TfToken("PbrPreview"));
-    auto s1Schema = pxr::UsdShadeShader::Define(_stage, s1Path);
-    s1Schema.CreateIdAttr().Set(pxr::TfToken("UsdPreviewSurface"));
-    auto surfaceOutput = s1Schema.CreateOutput(pxr::TfToken("surface"),
+pxr::UsdShadeInput
+USDExporter::_exportPreviewShader(const pxr::SdfPath path,
+                                  pxr::UsdShadeOutput materialSurface) {
+    pxr::SdfPath shaderPath = path.AppendChild(pxr::TfToken("PbrPreview"));
+    auto schema = pxr::UsdShadeShader::Define(_stage, shaderPath);
+    schema.CreateIdAttr().Set(pxr::TfToken("UsdPreviewSurface"));
+    auto surfaceOutput = schema.CreateOutput(pxr::TfToken("surface"),
                                                pxr::SdfValueTypeNames->Token);
     materialSurface.ConnectToSource(surfaceOutput);
     
-    s1Schema.CreateInput(pxr::TfToken("opacity"),
-                         pxr::SdfValueTypeNames->Float).Set(1.0f);
-    s1Schema.CreateInput(pxr::TfToken("useSpecularWorkflow"),
-                         pxr::SdfValueTypeNames->Int).Set(0);
-    s1Schema.CreateInput(pxr::TfToken("specularColor"),
-                         pxr::SdfValueTypeNames->Color3f).Set(pxr::GfVec3f(0, 0, 0));
-    s1Schema.CreateInput(pxr::TfToken("clearcoat"),
-                         pxr::SdfValueTypeNames->Float).Set(0.0f);
-    s1Schema.CreateInput(pxr::TfToken("clearcoatRoughness"),
-                         pxr::SdfValueTypeNames->Float).Set(0.01f);
-    s1Schema.CreateInput(pxr::TfToken("emissiveColor"),
-                         pxr::SdfValueTypeNames->Color3f).Set(pxr::GfVec3f(0, 0, 0));
-    s1Schema.CreateInput(pxr::TfToken("displacement"),
-                         pxr::SdfValueTypeNames->Float).Set(0.0f);
-    s1Schema.CreateInput(pxr::TfToken("occlusion"),
-                         pxr::SdfValueTypeNames->Float).Set(1.0f);
-    s1Schema.CreateInput(pxr::TfToken("normal"),
-                         pxr::SdfValueTypeNames->Float3).Set(pxr::GfVec3f(0, 0, 1));
-    s1Schema.CreateInput(pxr::TfToken("ior"),
-                         pxr::SdfValueTypeNames->Float).Set(1.5f);
-    s1Schema.CreateInput(pxr::TfToken("metallic"),
-                         pxr::SdfValueTypeNames->Float).Set(0.0f);
-    s1Schema.CreateInput(pxr::TfToken("roughness"),
-                         pxr::SdfValueTypeNames->Float).Set(0.8f);
+    schema.CreateInput(pxr::TfToken("opacity"),
+                       pxr::SdfValueTypeNames->Float).Set(1.0f);
+    schema.CreateInput(pxr::TfToken("useSpecularWorkflow"),
+                       pxr::SdfValueTypeNames->Int).Set(0);
+    schema.CreateInput(pxr::TfToken("specularColor"),
+                       pxr::SdfValueTypeNames->Color3f).Set(pxr::GfVec3f(0, 0, 0));
+    schema.CreateInput(pxr::TfToken("clearcoat"),
+                       pxr::SdfValueTypeNames->Float).Set(0.0f);
+    schema.CreateInput(pxr::TfToken("clearcoatRoughness"),
+                       pxr::SdfValueTypeNames->Float).Set(0.01f);
+    schema.CreateInput(pxr::TfToken("emissiveColor"),
+                       pxr::SdfValueTypeNames->Color3f).Set(pxr::GfVec3f(0, 0, 0));
+    schema.CreateInput(pxr::TfToken("displacement"),
+                       pxr::SdfValueTypeNames->Float).Set(0.0f);
+    schema.CreateInput(pxr::TfToken("occlusion"),
+                       pxr::SdfValueTypeNames->Float).Set(1.0f);
+    schema.CreateInput(pxr::TfToken("normal"),
+                       pxr::SdfValueTypeNames->Float3).Set(pxr::GfVec3f(0, 0, 1));
+    schema.CreateInput(pxr::TfToken("ior"),
+                       pxr::SdfValueTypeNames->Float).Set(1.5f);
+    schema.CreateInput(pxr::TfToken("metallic"),
+                       pxr::SdfValueTypeNames->Float).Set(0.0f);
+    schema.CreateInput(pxr::TfToken("roughness"),
+                       pxr::SdfValueTypeNames->Float).Set(0.8f);
+    return schema.CreateInput(pxr::TfToken("diffuseColor"),
+                              pxr::SdfValueTypeNames->Color3f);
+}
 
-    auto diffuseColor = s1Schema.CreateInput(pxr::TfToken("diffuseColor"),
-                                             pxr::SdfValueTypeNames->Color3f);
+pxr::UsdShadeOutput
+USDExporter::_exportSTPrimvarShader(const pxr::SdfPath path,
+                                    pxr::UsdShadeOutput materialSurface) {
+    pxr::SdfPath shaderPath = path.AppendChild(pxr::TfToken("Primvar"));
+    auto schema = pxr::UsdShadeShader::Define(_stage, shaderPath);
+    schema.CreateIdAttr().Set(pxr::TfToken("UsdPrimvarReader_float2"));
+    schema.CreateInput(pxr::TfToken("varname"),
+                       pxr::SdfValueTypeNames->Token).Set(pxr::TfToken("st"));
+    return schema.CreateOutput(pxr::TfToken("result"),
+                               pxr::SdfValueTypeNames->Float2);
+}
 
-    pxr::SdfPath s2Path = path.AppendChild(pxr::TfToken("Primvar"));
-    auto s2Schema = pxr::UsdShadeShader::Define(_stage, s2Path);
-    s2Schema.CreateIdAttr().Set(pxr::TfToken("UsdPrimvarReader_float2"));
-    auto result = s2Schema.CreateOutput(pxr::TfToken("result"),
-                                        pxr::SdfValueTypeNames->Float2);
-    s2Schema.CreateInput(pxr::TfToken("varname"),
-                         pxr::SdfValueTypeNames->Token).Set(pxr::TfToken("st"));
-    
+void
+USDExporter::_exportTextureShader(const pxr::SdfPath path,
+                                  std::string texturePath,
+                                  pxr::UsdShadeOutput primvar,
+                                  pxr::UsdShadeInput diffuseColor) {
     pxr::SdfPath s3Path = path.AppendChild(pxr::TfToken("Texture"));
     auto s3Schema = pxr::UsdShadeShader::Define(_stage, s3Path);
     s3Schema.CreateIdAttr().Set(pxr::TfToken("UsdUVTexture"));
     auto rgb = s3Schema.CreateOutput(pxr::TfToken("rgb"),
                                      pxr::SdfValueTypeNames->Float3);
     diffuseColor.ConnectToSource(rgb);
-
+    
     _filePathsForZip.insert(texturePath);
     pxr::SdfAssetPath relativePath(texturePath);
     s3Schema.CreateInput(pxr::TfToken("file"),
@@ -1055,7 +1056,33 @@ USDExporter::_ExportMaterial(const pxr::SdfPath path,
                          pxr::SdfValueTypeNames->Token).Set(pxr::TfToken("repeat"));
     auto st = s3Schema.CreateInput(pxr::TfToken("st"),
                                    pxr::SdfValueTypeNames->Float2);
-    st.ConnectToSource(result);
+    st.ConnectToSource(primvar);
+}
+
+void
+USDExporter::_ExportTextureMaterial(const pxr::SdfPath path,
+                                    std::string texturePath) {
+    _materialsCount++;
+    auto mSchema = pxr::UsdShadeMaterial::Define(_stage,
+                                                 pxr::SdfPath(path));
+    auto materialSurface = mSchema.CreateOutput(pxr::TfToken("surface"),
+                                                pxr::SdfValueTypeNames->Token);
+    auto diffuseColor = _exportPreviewShader(path, materialSurface);
+    auto primvar = _exportSTPrimvarShader(path, materialSurface);
+    _exportTextureShader(path, texturePath, primvar, diffuseColor);
+}
+
+
+void
+USDExporter::_ExportDisplayMaterial(const pxr::SdfPath path,
+                                    pxr::GfVec3f rgb, float a) {
+    _materialsCount++;
+    auto mSchema = pxr::UsdShadeMaterial::Define(_stage,
+                                                 pxr::SdfPath(path));
+    auto materialSurface = mSchema.CreateOutput(pxr::TfToken("surface"),
+                                                pxr::SdfValueTypeNames->Token);
+    auto diffuseColor = _exportPreviewShader(path, materialSurface);
+    auto primvar = _exportSTPrimvarShader(path, materialSurface);
 }
 
 // we might have a single mesh that has multiple materials on both the front
@@ -1075,7 +1102,7 @@ USDExporter::_cacheTextureMaterial(pxr::SdfPath path, MeshSubset& subset, int in
         //std::cerr << "appending material " << materialName << " to parentPath" << path << std::endl;
         pxr::SdfPath materialPath = path.AppendChild(pxr::TfToken(materialName));
         subset.SetMaterialPath(materialPath);
-        _ExportMaterial(materialPath, texturePath);
+        _ExportTextureMaterial(materialPath, texturePath);
         _texturePathMaterialPath[texturePath] = materialPath;
     } else {
         pxr::SdfPath materialPath = _texturePathMaterialPath[texturePath];
