@@ -279,8 +279,8 @@ USDExporter::_performExport(const std::string& skpSrc,
         usdzTime = _getCurrentTime_() - startTimeUSDZ;
     }
     exportTime = _getCurrentTime_() - startTime;
-    char buffer[256];
-    sprintf(buffer, "USD Export took %3.2lf secs:\n", exportTime);
+    char buffer[256]; // this is asking for trouble, but not sure a clearer way
+    sprintf(buffer, "USD Export took %3.2lf secs\n", exportTime);
     _exportTimeSummary += std::string(buffer);
     if (texturesTime > 1.0) {
         sprintf(buffer, "\tTextures Export took %3.2lf secs\n", texturesTime);
@@ -1422,65 +1422,60 @@ USDExporter::_exportMesh(pxr::SdfPath path,
     }
     // now need to bind the materials that have been already been created to
     // this mesh. If it has one material, we'll bind it to the whole mesh.
-    // if there's more than one, we need to use the UsdGeomSubset API on this
+    // We need to use the UsdGeomSubset API on this
     // mesh and bind each material to the appropriate set of indices
+    // note: even if there is only one, we need to use the geom subset stuff,
+    // because the material might be only on a subset of the faces of this mesh.
     pxr::TfToken relName = pxr::UsdShadeTokens->materialBinding;
     pxr::TfToken bindName = pxr::UsdShadeTokens->materialBind;
-    if (meshSubsets.size() == 1) {
-        MeshSubset& meshSubset = meshSubsets[0];
-        pxr::UsdPrim prim = primSchema.GetPrim();
-        prim.CreateRelationship(relName).AddTarget(meshSubset.GetMaterialPath());
-    } else {
-        // okay, we have 2 or more materials associated with this mesh
-        std::string subsetBaseName = "SubsetForMaterial";
-        int index = 0;
-
-        bool needWorkaround = true; // needed as of USD release 18.09
-        if (meshSubsets.size() < 500) {
-            // if we have less than 500 (pretty arbitrary), this will be performant
-            needWorkaround = false;
-        }
-        if (needWorkaround) {
-            // this is a workaround for the fact that currently, if I have to
-            // create a lot (say, 1,000s or more) subsets, it can run very
-            // slowly in Usd.  So we break it up into two parts - the first
-            // we use the Sdf API to
-            {
-                pxr::SdfChangeBlock block;
-                auto l = _stage->GetRootLayer();
-                pxr::SdfPrimSpecHandle prim = l->GetPrimAtPath(path);
-                for (MeshSubset& meshSubset : meshSubsets) {
-                    std::string subsetName = subsetBaseName;
-                    if (index != 0) {
-                        subsetName += "_" + std::to_string(index);
-                    }
-                    index++;
-                    pxr::SdfPrimSpec::New(prim,
-                                          subsetName,
-                                          pxr::SdfSpecifierDef,
-                                          "GeomSubset");
+    std::string subsetBaseName = "SubsetForMaterial";
+    int index = 0;
+    
+    bool needWorkaround = true; // needed as of USD release 18.09
+    if (meshSubsets.size() < 500) {
+        // if we have less than 500 (pretty arbitrary), this will be performant
+        needWorkaround = false;
+    }
+    if (needWorkaround) {
+        // this is a workaround for the fact that currently, if I have to
+        // create a lot (say, 1,000s or more) subsets, it can run very
+        // slowly in Usd.  So we break it up into two parts - the first
+        // we use the Sdf API to
+        {
+            pxr::SdfChangeBlock block;
+            auto l = _stage->GetRootLayer();
+            pxr::SdfPrimSpecHandle prim = l->GetPrimAtPath(path);
+            for (MeshSubset& meshSubset : meshSubsets) {
+                std::string subsetName = subsetBaseName;
+                if (index != 0) {
+                    subsetName += "_" + std::to_string(index);
                 }
+                index++;
+                pxr::SdfPrimSpec::New(prim,
+                                      subsetName,
+                                      pxr::SdfSpecifierDef,
+                                      "GeomSubset");
             }
         }
-        index = 0;
-        for (MeshSubset& meshSubset : meshSubsets) {
-            _geomSubsetsCount++;
-            std::string subsetName = subsetBaseName;
-            if (index != 0) {
-                subsetName += "_" + std::to_string(index);
-            }
-            index++;
-            pxr::SdfPath subsetPath = path.AppendChild(pxr::TfToken(subsetName));
-            auto subset = pxr::UsdGeomSubset::CreateGeomSubset(primSchema,
-                                                               subsetName,
-                                                               pxr::UsdGeomTokens->face,
-                                                               meshSubset.GetFaceIndices(),
-                                                               bindName,
-                                                               pxr::UsdGeomTokens->nonOverlapping);
-            pxr::UsdPrim prim = subset.GetPrim();
-            pxr::SdfPath materialPath = meshSubset.GetMaterialPath();
-            prim.CreateRelationship(relName).AddTarget(materialPath);
+    }
+    index = 0;
+    for (MeshSubset& meshSubset : meshSubsets) {
+        _geomSubsetsCount++;
+        std::string subsetName = subsetBaseName;
+        if (index != 0) {
+            subsetName += "_" + std::to_string(index);
         }
+        index++;
+        pxr::SdfPath subsetPath = path.AppendChild(pxr::TfToken(subsetName));
+        auto subset = pxr::UsdGeomSubset::CreateGeomSubset(primSchema,
+                                                           subsetName,
+                                                           pxr::UsdGeomTokens->face,
+                                                           meshSubset.GetFaceIndices(),
+                                                           bindName,
+                                                           pxr::UsdGeomTokens->nonOverlapping);
+        pxr::UsdPrim prim = subset.GetPrim();
+        pxr::SdfPath materialPath = meshSubset.GetMaterialPath();
+        prim.CreateRelationship(relName).AddTarget(materialPath);
     }
     return ;
 }
