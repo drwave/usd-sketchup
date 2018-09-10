@@ -197,14 +197,12 @@ private:
     // it once per mesh.
     std::map<std::string, pxr::SdfPath> _texturePathMaterialPath;
     
-    bool _hasFrontFaceMaterial;
     std::string _frontFaceTextureName;
     pxr::VtArray<pxr::GfVec2f> _frontUVs;
     pxr::GfVec4d _frontRGBA;
     pxr::VtArray<pxr::GfVec3f> _frontFaceRGBs;
     pxr::VtArray<float> _frontFaceAs;
 
-    bool _hasBackFaceMaterial;
     std::string _backFaceTextureName;
     pxr::VtArray<pxr::GfVec2f> _backUVs;
     pxr::GfVec4d _backRGBA;
@@ -263,26 +261,30 @@ private:
     std::string _ExportGroup(const pxr::SdfPath parentPath, SUGroupRef group,
                              std::set<std::string>& usedGroupNames);
 
-    pxr::UsdShadeInput _exportPreviewShader(const pxr::SdfPath path,
-                                            pxr::UsdShadeOutput materialSurface);
-    pxr::UsdShadeOutput _exportSTPrimvarShader(const pxr::SdfPath path,
-                                               pxr::UsdShadeOutput materialSurface);
+    pxr::SdfPath _defaultMaterialPath;
+    // returns diffuseColor & opacity inputs
+    std::pair<pxr::UsdShadeInput, pxr::UsdShadeInput>
+    _exportPreviewShader(const pxr::SdfPath path,
+                         pxr::UsdShadeOutput materialSurface);
+    pxr::UsdShadeOutput _exportSTPrimvarShader(const pxr::SdfPath path);
+    pxr::UsdShadeOutput _exportDisplayColorPrimvarShader(const pxr::SdfPath path);
+    pxr::UsdShadeOutput _exportDisplayOpacityPrimvarShader(const pxr::SdfPath path);
     void _exportTextureShader(const pxr::SdfPath path,
                               std::string texturePath,
                               pxr::UsdShadeOutput result,
                               pxr::UsdShadeInput diffuseColor);
     void _ExportTextureMaterial(const pxr::SdfPath parentPath,
                                 std::string texturePath);
-    void _ExportDisplayMaterial(const pxr::SdfPath parentPath,
-                                pxr::GfVec3f rgb, float a);
+    void _ExportDisplayMaterial(const pxr::SdfPath parentPath);
     bool _ExportMaterials(const pxr::SdfPath parentPath);
     void _ExportFaces(const pxr::SdfPath parentPath, SUEntitiesRef entities);
     size_t _gatherFaceInfo(const pxr::SdfPath parentPath, SUFaceRef face);
     void _clearFacesExport();
     size_t _addFaceAsTexturedTriangles(SUFaceRef face);
     std::string _textureFileName(SUTextureRef textureRef);
-    bool _addFrontFaceMaterial(SUFaceRef face);
-    bool _addBackFaceMaterial(SUFaceRef face);
+    void _addFrontFaceMaterial(SUFaceRef face);
+    void _addBackFaceMaterial(SUFaceRef face);
+    int _cacheDisplayMaterial(pxr::SdfPath path, MeshSubset& subset, int index);
     int _cacheTextureMaterial(pxr::SdfPath path, MeshSubset& subset, int index);
     void _exportMesh(pxr::SdfPath path,
                      std::vector<MeshSubset> _meshSubsets,
