@@ -1187,6 +1187,37 @@ USDExporter::_ExportMaterials(const pxr::SdfPath parentPath) {
     return true;
 }
 
+bool
+USDExporter::_bothDisplayColorAreEqual() {
+    if (_frontFaceRGBs.size() != _backFaceRGBs.size()) {
+        return false;
+    }
+    for (int i = 0; i < _frontFaceRGBs.size(); i++) {
+        pxr::GfVec3f frontFaceRGB = _frontFaceRGBs[i];
+        pxr::GfVec3f backFaceRGB = _backFaceRGBs[i];
+        if (frontFaceRGB != backFaceRGB) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool
+USDExporter::_bothDisplayOpacityAreEqual() {
+    if (_frontFaceAs.size() != _backFaceAs.size()) {
+        return false;
+    }
+    for (int i = 0; i < _frontFaceAs.size(); i++) {
+        float frontFaceA = _frontFaceAs[i];
+        float backFaceA = _backFaceAs[i];
+        if (frontFaceA != backFaceA) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
 void
 USDExporter::_ExportFaces(const pxr::SdfPath parentPath,
                           SUEntitiesRef entities) {
@@ -1203,6 +1234,8 @@ USDExporter::_ExportFaces(const pxr::SdfPath parentPath,
     // to specify the materials.
     // if we bisect a quad in both ways, we have 4 faces, but then each of these
     // faces generates two triangles, each of which is a separate face to USD
+    // Note that as of USD 18.09 Hydra does not currently render GeomSubsets,
+    // but SceneKit on iOS 12 and macOS Mojave does.
     for (size_t i = 0; i < num; i++) {
         pxr::VtArray<int> currentFaceIndices;
         size_t faceCount = _gatherFaceInfo(parentPath, faces[i]);
@@ -1211,10 +1244,12 @@ USDExporter::_ExportFaces(const pxr::SdfPath parentPath,
             currentFaceIndices.push_back(index);
         }
         exportedFaceCount += faceCount;
-        MeshSubset frontSubset(_frontFaceTextureName, currentFaceIndices);
-        _meshFrontFaceSubsets.push_back(frontSubset);
-        MeshSubset backSubset(_backFaceTextureName, currentFaceIndices);
-        _meshBackFaceSubsets.push_back(backSubset);
+        if (GetExportMaterials()) {
+            MeshSubset frontSubset(_frontFaceTextureName, currentFaceIndices);
+            _meshFrontFaceSubsets.push_back(frontSubset);
+            MeshSubset backSubset(_backFaceTextureName, currentFaceIndices);
+            _meshBackFaceSubsets.push_back(backSubset);
+        }
     }
     if (exportedFaceCount) {
         if (GetExportMaterials()) {
@@ -1229,11 +1264,15 @@ USDExporter::_ExportFaces(const pxr::SdfPath parentPath,
                 _ExportMeshes(parentPath);
             }
         } else {
-            // if we're not exporting any materials, we should pick whether
-            // we want to export our normal pair of front & back facing
-            // meshes, or if we just want to export a single double-sided mesh.
-            // Eventually this should (maybe?) be a flag, but for now:
-            _ExportDoubleSidedMesh(parentPath);
+            // If the color is the same on both sides of the face, we can
+            // put out a single double-sided mesh, otherwise we need to put
+            // out a front-facing mesh and a back-facing mesh, each with
+            // their own displayColor and Opacity
+            if (_bothDisplayColorAreEqual() && _bothDisplayOpacityAreEqual()) {
+                _ExportDoubleSidedMesh(parentPath);
+            } else {
+                _ExportMeshes(parentPath);
+            }
         }
     }
 }
