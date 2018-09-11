@@ -226,6 +226,8 @@ private:
     std::string _skpFileName;
     std::string _usdFileName;
     std::string _textureDirectory;
+    bool _useSharedFallbackMaterial;
+    pxr::SdfPath _fallbackDisplayMaterialPath;
 
     std::string _baseFileName;
     std::string _zipFileName;
@@ -238,6 +240,7 @@ private:
     void _writeMenvFile();
 
     void _ExportTextures(const pxr::SdfPath parentPath);
+    void _ExportFallbackDisplayMaterial(const pxr::SdfPath parentPath);
     void _ExportGeom(const pxr::SdfPath parentPath);
     void _ExportEntities(const pxr::SdfPath parentPath, SUEntitiesRef entities);
     void _prepAvars();
@@ -276,6 +279,7 @@ private:
     void _ExportTextureMaterial(const pxr::SdfPath parentPath,
                                 std::string texturePath);
     void _ExportDisplayMaterial(const pxr::SdfPath parentPath);
+    bool _someMaterialsToExport();
     bool _ExportMaterials(const pxr::SdfPath parentPath);
     void _ExportFaces(const pxr::SdfPath parentPath, SUEntitiesRef entities);
     size_t _gatherFaceInfo(const pxr::SdfPath parentPath, SUFaceRef face);

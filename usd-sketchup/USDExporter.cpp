@@ -189,6 +189,7 @@ USDExporter::_performExport(const std::string& skpSrc,
     _geomSubsetsCount = 0;
     _filePathsForZip.clear();
     _exportTimeSummary.clear();
+    _useSharedFallbackMaterial = false;
     
     _exportingUSDZ = false;
     SetSkpFileName(skpSrc);
@@ -234,6 +235,7 @@ USDExporter::_performExport(const std::string& skpSrc,
         double startTimeTextures = _getCurrentTime_();
         _ExportTextures(path); // do this first so we know our _textureDirectory
         texturesTime = _getCurrentTime_() - startTimeTextures;
+        _ExportFallbackDisplayMaterial(path);
     }
     pxr::SdfPath parentPathS(parentPath);
     double startTimeComponents = _getCurrentTime_();
@@ -629,6 +631,9 @@ USDExporter::_ExportComponentDefinition(const pxr::SdfPath parentPath,
     SU_CALL(SUComponentDefinitionGetBehavior(comp_def, &behavior));
     _isBillboard = behavior.component_always_face_camera;
     
+    // Before we do anything else, we should export our fallback material here
+    _ExportFallbackDisplayMaterial(path);
+    
     _ExportEntities(path, entities);
 
     if (GetExportToSingleFile()) {
@@ -732,6 +737,15 @@ USDExporter::_ExportTextures(const pxr::SdfPath parentPath) {
     // at the end, we cut down the texture directory name here for referencing
     // we just want the directory, not the whole path
     _textureDirectory = pxr::TfGetBaseName(_textureDirectory);
+}
+
+void
+USDExporter::_ExportFallbackDisplayMaterial(const pxr::SdfPath path) {
+    _useSharedFallbackMaterial = true;
+    std::string materialName = "FallbackDisplayMaterial";
+    _fallbackDisplayMaterialPath = path.AppendChild(pxr::TfToken(materialName));
+    // now we need to define it:
+    _ExportDisplayMaterial(_fallbackDisplayMaterialPath);
 }
 
 void
@@ -1143,6 +1157,11 @@ USDExporter::_cacheTextureMaterial(pxr::SdfPath path, MeshSubset& subset, int in
 
 int
 USDExporter::_cacheDisplayMaterial(pxr::SdfPath path, MeshSubset& subset, int index) {
+    if (_useSharedFallbackMaterial) {
+        subset.SetMaterialPath(_fallbackDisplayMaterialPath);
+        return index;
+    }
+    // okay, we're not going with the shared one
     std::string materialName = "DisplayMaterial";
     if (index != 0) {
         materialName += "_" + std::to_string(index);
@@ -1154,6 +1173,28 @@ USDExporter::_cacheDisplayMaterial(pxr::SdfPath path, MeshSubset& subset, int in
     return index;
 }
 
+bool
+USDExporter::_someMaterialsToExport() {
+    for (MeshSubset& subset : _meshFrontFaceSubsets) {
+        if (!subset.GetMaterialTextureName().empty()) {
+            return true;
+        }
+        if (subset.GetMaterialPath() != _fallbackDisplayMaterialPath) {
+            return true;
+        }
+    }
+    for (MeshSubset& subset : _meshBackFaceSubsets) {
+        if (!subset.GetMaterialTextureName().empty()) {
+            return true;
+        }
+        if (subset.GetMaterialPath() != _fallbackDisplayMaterialPath) {
+            return true;
+        }
+    }
+    // there are no textures and all the display subsets are just referencing
+    // the shared fallback material
+    return false;
+}
 
 bool
 USDExporter::_ExportMaterials(const pxr::SdfPath parentPath) {
@@ -1161,14 +1202,14 @@ USDExporter::_ExportMaterials(const pxr::SdfPath parentPath) {
         // no need - no materials
         return false;
     }
-    pxr::SdfPath path = parentPath.AppendChild(pxr::TfToken("Materials"));
-    auto primSchema = pxr::UsdGeomScope::Define(_stage, path);
-    int displayIndex = 0;
-    int textureIndex = 0;
     // we might have a single mesh that has many materials, many of which are
     // the same. Since SketchUp has such a simple material schema (just a
     // texture map at most), we want to coalesce these as much as possible.
-    if (_exportMaterials) {
+    if (_exportMaterials && _someMaterialsToExport()) {
+        pxr::SdfPath path = parentPath.AppendChild(pxr::TfToken("Materials"));
+        auto primSchema = pxr::UsdGeomScope::Define(_stage, path);
+        int displayIndex = 0;
+        int textureIndex = 0;
         for (MeshSubset& subset : _meshFrontFaceSubsets) {
             if (subset.GetMaterialTextureName().empty()) {
                 displayIndex = _cacheDisplayMaterial(path, subset, displayIndex);
@@ -1258,10 +1299,16 @@ USDExporter::_ExportFaces(const pxr::SdfPath parentPath,
             if (_ExportMaterials(parentPath)) {
                 _ExportMeshes(parentPath);
             } else {
-                // if we didn't export any materials, we should just export a single
-                // double-sided copy of the mesh
-                //_ExportDoubleSidedMesh(parentPath);
-                _ExportMeshes(parentPath);
+                // if we didn't export any materials, and the color is the same
+                // on both sides of the face, we can put out a single
+                // double-sided mesh, otherwise we need to put out a
+                // front-facing mesh and a back-facing mesh, each with their
+                // own displayColor and Opacity
+                if (_bothDisplayColorAreEqual() && _bothDisplayOpacityAreEqual()) {
+                    _ExportDoubleSidedMesh(parentPath);
+                } else {
+                    _ExportMeshes(parentPath);
+                }
             }
         } else {
             // If the color is the same on both sides of the face, we can
