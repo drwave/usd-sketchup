@@ -55,11 +55,15 @@
 
 class MeshSubset {
 public:
-    MeshSubset(std::string materialTextureName, pxr::VtArray<int> faceIndices);
+    MeshSubset(std::string materialTextureName,
+               pxr::GfVec3f rgb, float opacity,
+               pxr::VtArray<int> faceIndices);
     ~MeshSubset();
     //MeshSubset(const MeshSubset&) = delete;
     
     const std::string GetMaterialTextureName();
+    const pxr::GfVec3f GetRGB();
+    const float GetOpacity();
     const pxr::VtArray<int> GetFaceIndices();
     pxr::SdfPath GetMaterialPath();
     void SetMaterialPath(pxr::SdfPath path);
@@ -68,6 +72,8 @@ private:
     std::string _materialTextureName;
     pxr::VtArray<int> _faceIndices;
     pxr::SdfPath _materialPath;
+    pxr::GfVec3f _rgb;
+    float _opacity;
 };
 
 
@@ -265,6 +271,9 @@ private:
                              std::set<std::string>& usedGroupNames);
 
     pxr::SdfPath _defaultMaterialPath;
+    void _exportRGBAShader(const pxr::SdfPath path,
+                           pxr::UsdShadeOutput materialSurface,
+                           pxr::GfVec3f rgb, float opacity);
     // returns diffuseColor & opacity inputs
     std::pair<pxr::UsdShadeInput, pxr::UsdShadeInput>
     _exportPreviewShader(const pxr::SdfPath path,
@@ -278,6 +287,8 @@ private:
                               pxr::UsdShadeInput diffuseColor);
     void _ExportTextureMaterial(const pxr::SdfPath parentPath,
                                 std::string texturePath);
+    void _ExportRGBAMaterial(const pxr::SdfPath path,
+                             pxr::GfVec3f rgb, float opacity);
     void _ExportDisplayMaterial(const pxr::SdfPath parentPath);
     bool _someMaterialsToExport();
     bool _ExportMaterials(const pxr::SdfPath parentPath);
@@ -289,6 +300,7 @@ private:
     void _addFrontFaceMaterial(SUFaceRef face);
     void _addBackFaceMaterial(SUFaceRef face);
     int _cacheDisplayMaterial(pxr::SdfPath path, MeshSubset& subset, int index);
+    void _cacheColorMaterial(pxr::SdfPath path, MeshSubset& subset);
     int _cacheTextureMaterial(pxr::SdfPath path, MeshSubset& subset, int index);
     bool _bothDisplayColorAreEqual();
     bool _bothDisplayOpacityAreEqual();

@@ -101,8 +101,11 @@ public:
 // constructor runs once to set USD plugin path
 static InitUSDPluginPath getUSDPlugInPathSet;
 
-MeshSubset::MeshSubset(std::string materialTextureName, pxr::VtArray<int> faceIndices) :
+MeshSubset::MeshSubset(std::string materialTextureName,
+                       pxr::GfVec3f rgb, float opacity,
+                       pxr::VtArray<int> faceIndices) :
                         _materialTextureName(materialTextureName),
+                        _rgb(rgb), _opacity(opacity),
                         _faceIndices(faceIndices) {
 }
 
@@ -113,6 +116,17 @@ const std::string
 MeshSubset::GetMaterialTextureName() {
     return _materialTextureName;
 }
+
+const pxr::GfVec3f
+MeshSubset::GetRGB() {
+    return _rgb;
+}
+
+const float
+MeshSubset::GetOpacity() {
+    return _opacity;
+}
+
 
 const pxr::VtArray<int> MeshSubset::GetFaceIndices() {
     return _faceIndices;
@@ -998,6 +1012,47 @@ USDExporter::_clearFacesExport() {
     _texturePathMaterialPath.clear();
 }
 
+
+void
+USDExporter::_exportRGBAShader(const pxr::SdfPath path,
+                               pxr::UsdShadeOutput materialSurface,
+                               pxr::GfVec3f rgb, float opacity) {
+    pxr::SdfPath shaderPath = path.AppendChild(pxr::TfToken("RGBA"));
+    auto schema = pxr::UsdShadeShader::Define(_stage, shaderPath);
+    schema.CreateIdAttr().Set(pxr::TfToken("UsdPreviewSurface"));
+    auto surfaceOutput = schema.CreateOutput(pxr::TfToken("surface"),
+                                             pxr::SdfValueTypeNames->Token);
+    materialSurface.ConnectToSource(surfaceOutput);
+    schema.CreateInput(pxr::TfToken("opacity"),
+                       pxr::SdfValueTypeNames->Float).Set(opacity);
+    schema.CreateInput(pxr::TfToken("diffuseColor"),
+                       pxr::SdfValueTypeNames->Color3f).Set(rgb);
+    // this is all boilerplate, and we should eventually be able to omit it
+    schema.CreateInput(pxr::TfToken("useSpecularWorkflow"),
+                       pxr::SdfValueTypeNames->Int).Set(0);
+    schema.CreateInput(pxr::TfToken("specularColor"),
+                       pxr::SdfValueTypeNames->Color3f).Set(pxr::GfVec3f(0, 0, 0));
+    schema.CreateInput(pxr::TfToken("clearcoat"),
+                       pxr::SdfValueTypeNames->Float).Set(0.0f);
+    schema.CreateInput(pxr::TfToken("clearcoatRoughness"),
+                       pxr::SdfValueTypeNames->Float).Set(0.01f);
+    schema.CreateInput(pxr::TfToken("emissiveColor"),
+                       pxr::SdfValueTypeNames->Color3f).Set(pxr::GfVec3f(0, 0, 0));
+    schema.CreateInput(pxr::TfToken("displacement"),
+                       pxr::SdfValueTypeNames->Float).Set(0.0f);
+    schema.CreateInput(pxr::TfToken("occlusion"),
+                       pxr::SdfValueTypeNames->Float).Set(1.0f);
+    schema.CreateInput(pxr::TfToken("normal"),
+                       pxr::SdfValueTypeNames->Float3).Set(pxr::GfVec3f(0, 0, 1));
+    schema.CreateInput(pxr::TfToken("ior"),
+                       pxr::SdfValueTypeNames->Float).Set(1.5f);
+    schema.CreateInput(pxr::TfToken("metallic"),
+                       pxr::SdfValueTypeNames->Float).Set(0.0f);
+    schema.CreateInput(pxr::TfToken("roughness"),
+                       pxr::SdfValueTypeNames->Float).Set(0.8f);
+    return ;
+}
+
 std::pair<pxr::UsdShadeInput, pxr::UsdShadeInput>
 USDExporter::_exportPreviewShader(const pxr::SdfPath path,
                                   pxr::UsdShadeOutput materialSurface) {
@@ -1005,9 +1060,13 @@ USDExporter::_exportPreviewShader(const pxr::SdfPath path,
     auto schema = pxr::UsdShadeShader::Define(_stage, shaderPath);
     schema.CreateIdAttr().Set(pxr::TfToken("UsdPreviewSurface"));
     auto surfaceOutput = schema.CreateOutput(pxr::TfToken("surface"),
-                                               pxr::SdfValueTypeNames->Token);
+                                             pxr::SdfValueTypeNames->Token);
     materialSurface.ConnectToSource(surfaceOutput);
-    
+    auto opacity = schema.CreateInput(pxr::TfToken("opacity"),
+                                      pxr::SdfValueTypeNames->Float);
+    auto diffuseColor = schema.CreateInput(pxr::TfToken("diffuseColor"),
+                                           pxr::SdfValueTypeNames->Color3f);
+    // this is all boilerplate, and we should eventually be able to omit it
     schema.CreateInput(pxr::TfToken("useSpecularWorkflow"),
                        pxr::SdfValueTypeNames->Int).Set(0);
     schema.CreateInput(pxr::TfToken("specularColor"),
@@ -1031,12 +1090,9 @@ USDExporter::_exportPreviewShader(const pxr::SdfPath path,
     schema.CreateInput(pxr::TfToken("roughness"),
                        pxr::SdfValueTypeNames->Float).Set(0.8f);
     
-    auto opacity = schema.CreateInput(pxr::TfToken("opacity"),
-                                      pxr::SdfValueTypeNames->Float);
-    auto diffuseColor = schema.CreateInput(pxr::TfToken("diffuseColor"),
-                              pxr::SdfValueTypeNames->Color3f);
     return std::make_pair(diffuseColor, opacity);
 }
+
 
 pxr::UsdShadeOutput
 USDExporter::_exportSTPrimvarShader(const pxr::SdfPath path) {
@@ -1112,6 +1168,16 @@ USDExporter::_ExportTextureMaterial(const pxr::SdfPath path,
     _exportTextureShader(path, texturePath, primvar, diffuseColor);
 }
 
+void
+USDExporter::_ExportRGBAMaterial(const pxr::SdfPath path,
+                                 pxr::GfVec3f rgb, float opacity) {
+    _materialsCount++;
+    auto mSchema = pxr::UsdShadeMaterial::Define(_stage,
+                                                 pxr::SdfPath(path));
+    auto materialSurface = mSchema.CreateOutput(pxr::TfToken("surface"),
+                                                pxr::SdfValueTypeNames->Token);
+    _exportRGBAShader(path, materialSurface, rgb, opacity);
+}
 
 void
 USDExporter::_ExportDisplayMaterial(const pxr::SdfPath path) {
@@ -1173,6 +1239,28 @@ USDExporter::_cacheDisplayMaterial(pxr::SdfPath path, MeshSubset& subset, int in
     return index;
 }
 
+void
+USDExporter::_cacheColorMaterial(pxr::SdfPath path, MeshSubset& subset) {
+    pxr::GfVec3f rgb = subset.GetRGB();
+    float opacity = subset.GetOpacity();
+    char buffer[256]; // this is asking for trouble, but not sure a clearer way
+    // single precision float has 7.2 decimals of precision, hence, 8...
+    sprintf(buffer, "RGBAMaterial_%.8f_%.8f_%.8f_%.8f",
+            rgb[0], rgb[1], rgb[2], opacity);
+    // need to remove the . in the string...
+    std::string str(buffer);
+    str.erase(std::remove(str.begin(), str.end(), '.'), str.end());
+
+    std::string materialName = str;
+    pxr::SdfPath materialPath = path.AppendChild(pxr::TfToken(materialName));
+    subset.SetMaterialPath(materialPath);
+    // note: We may define the same material many times on a given mesh if
+    // the same color is on different faces. Eventually we may want to note that
+    // we've already done this for a given path, but for now, this is clearer...
+    _ExportRGBAMaterial(materialPath, subset.GetRGB(), subset.GetOpacity());
+    return ;
+}
+
 bool
 USDExporter::_someMaterialsToExport() {
     for (MeshSubset& subset : _meshFrontFaceSubsets) {
@@ -1212,14 +1300,26 @@ USDExporter::_ExportMaterials(const pxr::SdfPath parentPath) {
         int textureIndex = 0;
         for (MeshSubset& subset : _meshFrontFaceSubsets) {
             if (subset.GetMaterialTextureName().empty()) {
-                displayIndex = _cacheDisplayMaterial(path, subset, displayIndex);
+                if (GetExportARKitCompatibleUSDZ()) {
+                    // if we're exporting for ARKit, we need to use the RGBA
+                    // material, since currently, the display material doesn't work
+                    _cacheColorMaterial(path, subset);
+                } else {
+                    displayIndex = _cacheDisplayMaterial(path, subset, displayIndex);
+                }
             } else {
                 textureIndex = _cacheTextureMaterial(path, subset, textureIndex);
             }
         }
         for (MeshSubset& subset : _meshBackFaceSubsets) {
             if (subset.GetMaterialTextureName().empty()) {
-                displayIndex = _cacheDisplayMaterial(path, subset, displayIndex);
+                if (GetExportARKitCompatibleUSDZ()) {
+                    // if we're exporting for ARKit, we need to use the RGBA
+                    // material, since currently, the display material doesn't work
+                    _cacheColorMaterial(path, subset);
+                } else {
+                    displayIndex = _cacheDisplayMaterial(path, subset, displayIndex);
+                }
             } else {
                 textureIndex = _cacheTextureMaterial(path, subset, textureIndex);
             }
@@ -1286,9 +1386,16 @@ USDExporter::_ExportFaces(const pxr::SdfPath parentPath,
         }
         exportedFaceCount += faceCount;
         if (GetExportMaterials()) {
-            MeshSubset frontSubset(_frontFaceTextureName, currentFaceIndices);
+            pxr::GfVec3f rgb(_frontRGBA[0], _frontRGBA[1], _frontRGBA[2]);
+            float opacity = _frontRGBA[3];
+            MeshSubset frontSubset(_frontFaceTextureName, rgb, opacity,
+                                   currentFaceIndices);
             _meshFrontFaceSubsets.push_back(frontSubset);
-            MeshSubset backSubset(_backFaceTextureName, currentFaceIndices);
+
+            rgb = pxr::GfVec3f(_backRGBA[0], _backRGBA[1], _backRGBA[2]);
+            opacity = _backRGBA[3];
+            MeshSubset backSubset(_backFaceTextureName, rgb, opacity,
+                                  currentFaceIndices);
             _meshBackFaceSubsets.push_back(backSubset);
         }
     }
