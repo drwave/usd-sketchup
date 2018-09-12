@@ -1027,29 +1027,33 @@ USDExporter::_exportRGBAShader(const pxr::SdfPath path,
                        pxr::SdfValueTypeNames->Float).Set(opacity);
     schema.CreateInput(pxr::TfToken("diffuseColor"),
                        pxr::SdfValueTypeNames->Color3f).Set(rgb);
-    // this is all boilerplate, and we should eventually be able to omit it
-    schema.CreateInput(pxr::TfToken("useSpecularWorkflow"),
-                       pxr::SdfValueTypeNames->Int).Set(0);
-    schema.CreateInput(pxr::TfToken("specularColor"),
-                       pxr::SdfValueTypeNames->Color3f).Set(pxr::GfVec3f(0, 0, 0));
-    schema.CreateInput(pxr::TfToken("clearcoat"),
-                       pxr::SdfValueTypeNames->Float).Set(0.0f);
-    schema.CreateInput(pxr::TfToken("clearcoatRoughness"),
-                       pxr::SdfValueTypeNames->Float).Set(0.01f);
-    schema.CreateInput(pxr::TfToken("emissiveColor"),
-                       pxr::SdfValueTypeNames->Color3f).Set(pxr::GfVec3f(0, 0, 0));
-    schema.CreateInput(pxr::TfToken("displacement"),
-                       pxr::SdfValueTypeNames->Float).Set(0.0f);
-    schema.CreateInput(pxr::TfToken("occlusion"),
-                       pxr::SdfValueTypeNames->Float).Set(1.0f);
-    schema.CreateInput(pxr::TfToken("normal"),
-                       pxr::SdfValueTypeNames->Float3).Set(pxr::GfVec3f(0, 0, 1));
-    schema.CreateInput(pxr::TfToken("ior"),
-                       pxr::SdfValueTypeNames->Float).Set(1.5f);
-    schema.CreateInput(pxr::TfToken("metallic"),
-                       pxr::SdfValueTypeNames->Float).Set(0.0f);
-    schema.CreateInput(pxr::TfToken("roughness"),
-                       pxr::SdfValueTypeNames->Float).Set(0.8f);
+    if (!GetExportARKitCompatibleUSDZ()) {
+        // this is all boilerplate, and we should eventually be able to omit it
+        // for now, omit if we're making ARKit compatible stuff, as it doesn't
+        // need it
+        schema.CreateInput(pxr::TfToken("useSpecularWorkflow"),
+                           pxr::SdfValueTypeNames->Int).Set(0);
+        schema.CreateInput(pxr::TfToken("specularColor"),
+                           pxr::SdfValueTypeNames->Color3f).Set(pxr::GfVec3f(0, 0, 0));
+        schema.CreateInput(pxr::TfToken("clearcoat"),
+                           pxr::SdfValueTypeNames->Float).Set(0.0f);
+        schema.CreateInput(pxr::TfToken("clearcoatRoughness"),
+                           pxr::SdfValueTypeNames->Float).Set(0.01f);
+        schema.CreateInput(pxr::TfToken("emissiveColor"),
+                           pxr::SdfValueTypeNames->Color3f).Set(pxr::GfVec3f(0, 0, 0));
+        schema.CreateInput(pxr::TfToken("displacement"),
+                           pxr::SdfValueTypeNames->Float).Set(0.0f);
+        schema.CreateInput(pxr::TfToken("occlusion"),
+                           pxr::SdfValueTypeNames->Float).Set(1.0f);
+        schema.CreateInput(pxr::TfToken("normal"),
+                           pxr::SdfValueTypeNames->Float3).Set(pxr::GfVec3f(0, 0, 1));
+        schema.CreateInput(pxr::TfToken("ior"),
+                           pxr::SdfValueTypeNames->Float).Set(1.5f);
+        schema.CreateInput(pxr::TfToken("metallic"),
+                           pxr::SdfValueTypeNames->Float).Set(0.0f);
+        schema.CreateInput(pxr::TfToken("roughness"),
+                           pxr::SdfValueTypeNames->Float).Set(0.8f);
+    }
     return ;
 }
 
@@ -1066,30 +1070,33 @@ USDExporter::_exportPreviewShader(const pxr::SdfPath path,
                                       pxr::SdfValueTypeNames->Float);
     auto diffuseColor = schema.CreateInput(pxr::TfToken("diffuseColor"),
                                            pxr::SdfValueTypeNames->Color3f);
-    // this is all boilerplate, and we should eventually be able to omit it
-    schema.CreateInput(pxr::TfToken("useSpecularWorkflow"),
-                       pxr::SdfValueTypeNames->Int).Set(0);
-    schema.CreateInput(pxr::TfToken("specularColor"),
-                       pxr::SdfValueTypeNames->Color3f).Set(pxr::GfVec3f(0, 0, 0));
-    schema.CreateInput(pxr::TfToken("clearcoat"),
-                       pxr::SdfValueTypeNames->Float).Set(0.0f);
-    schema.CreateInput(pxr::TfToken("clearcoatRoughness"),
-                       pxr::SdfValueTypeNames->Float).Set(0.01f);
-    schema.CreateInput(pxr::TfToken("emissiveColor"),
-                       pxr::SdfValueTypeNames->Color3f).Set(pxr::GfVec3f(0, 0, 0));
-    schema.CreateInput(pxr::TfToken("displacement"),
-                       pxr::SdfValueTypeNames->Float).Set(0.0f);
-    schema.CreateInput(pxr::TfToken("occlusion"),
-                       pxr::SdfValueTypeNames->Float).Set(1.0f);
-    schema.CreateInput(pxr::TfToken("normal"),
-                       pxr::SdfValueTypeNames->Float3).Set(pxr::GfVec3f(0, 0, 1));
-    schema.CreateInput(pxr::TfToken("ior"),
-                       pxr::SdfValueTypeNames->Float).Set(1.5f);
-    schema.CreateInput(pxr::TfToken("metallic"),
-                       pxr::SdfValueTypeNames->Float).Set(0.0f);
-    schema.CreateInput(pxr::TfToken("roughness"),
-                       pxr::SdfValueTypeNames->Float).Set(0.8f);
-    
+    if (!GetExportARKitCompatibleUSDZ()) {
+        // this is all boilerplate, and we should eventually be able to omit it
+        // for now, omit if we're making ARKit compatible stuff, as it doesn't
+        // need it
+        schema.CreateInput(pxr::TfToken("useSpecularWorkflow"),
+                           pxr::SdfValueTypeNames->Int).Set(0);
+        schema.CreateInput(pxr::TfToken("specularColor"),
+                           pxr::SdfValueTypeNames->Color3f).Set(pxr::GfVec3f(0, 0, 0));
+        schema.CreateInput(pxr::TfToken("clearcoat"),
+                           pxr::SdfValueTypeNames->Float).Set(0.0f);
+        schema.CreateInput(pxr::TfToken("clearcoatRoughness"),
+                           pxr::SdfValueTypeNames->Float).Set(0.01f);
+        schema.CreateInput(pxr::TfToken("emissiveColor"),
+                           pxr::SdfValueTypeNames->Color3f).Set(pxr::GfVec3f(0, 0, 0));
+        schema.CreateInput(pxr::TfToken("displacement"),
+                           pxr::SdfValueTypeNames->Float).Set(0.0f);
+        schema.CreateInput(pxr::TfToken("occlusion"),
+                           pxr::SdfValueTypeNames->Float).Set(1.0f);
+        schema.CreateInput(pxr::TfToken("normal"),
+                           pxr::SdfValueTypeNames->Float3).Set(pxr::GfVec3f(0, 0, 1));
+        schema.CreateInput(pxr::TfToken("ior"),
+                           pxr::SdfValueTypeNames->Float).Set(1.5f);
+        schema.CreateInput(pxr::TfToken("metallic"),
+                           pxr::SdfValueTypeNames->Float).Set(0.0f);
+        schema.CreateInput(pxr::TfToken("roughness"),
+                           pxr::SdfValueTypeNames->Float).Set(0.8f);
+    }
     return std::make_pair(diffuseColor, opacity);
 }
 
@@ -1240,7 +1247,7 @@ USDExporter::_cacheDisplayMaterial(pxr::SdfPath path, MeshSubset& subset, int in
 }
 
 void
-USDExporter::_cacheColorMaterial(pxr::SdfPath path, MeshSubset& subset) {
+USDExporter::_cacheRGBAMaterial(pxr::SdfPath path, MeshSubset& subset) {
     pxr::GfVec3f rgb = subset.GetRGB();
     float opacity = subset.GetOpacity();
     char buffer[256]; // this is asking for trouble, but not sure a clearer way
@@ -1303,7 +1310,7 @@ USDExporter::_ExportMaterials(const pxr::SdfPath parentPath) {
                 if (GetExportARKitCompatibleUSDZ()) {
                     // if we're exporting for ARKit, we need to use the RGBA
                     // material, since currently, the display material doesn't work
-                    _cacheColorMaterial(path, subset);
+                    _cacheRGBAMaterial(path, subset);
                 } else {
                     displayIndex = _cacheDisplayMaterial(path, subset, displayIndex);
                 }
@@ -1315,8 +1322,8 @@ USDExporter::_ExportMaterials(const pxr::SdfPath parentPath) {
             if (subset.GetMaterialTextureName().empty()) {
                 if (GetExportARKitCompatibleUSDZ()) {
                     // if we're exporting for ARKit, we need to use the RGBA
-                    // material, since currently, the display material doesn't work
-                    _cacheColorMaterial(path, subset);
+                    // material, since currently display material doesn't work
+                    _cacheRGBAMaterial(path, subset);
                 } else {
                     displayIndex = _cacheDisplayMaterial(path, subset, displayIndex);
                 }

@@ -300,7 +300,7 @@ private:
     void _addFrontFaceMaterial(SUFaceRef face);
     void _addBackFaceMaterial(SUFaceRef face);
     int _cacheDisplayMaterial(pxr::SdfPath path, MeshSubset& subset, int index);
-    void _cacheColorMaterial(pxr::SdfPath path, MeshSubset& subset);
+    void _cacheRGBAMaterial(pxr::SdfPath path, MeshSubset& subset);
     int _cacheTextureMaterial(pxr::SdfPath path, MeshSubset& subset, int index);
     bool _bothDisplayColorAreEqual();
     bool _bothDisplayOpacityAreEqual();
