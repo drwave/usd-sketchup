@@ -883,7 +883,12 @@ USDExporter::_ExportInstance(const pxr::SdfPath parentPath,
     //std::cerr << "appending instanceName " << instanceName << " to parentPath " << parentPath << std::endl;
     pxr::SdfPath path = parentPath.AppendChild(pxr::TfToken(instanceName));
     auto primSchema = pxr::UsdGeomXform::Define(_stage, path);
-    primSchema.GetPrim().SetInstanceable(true);
+    if (GetExportARKitCompatibleUSDZ()) {
+        // ARKit 2 in iOS 12.0 can't handle instances
+        primSchema.GetPrim().SetInstanceable(false);
+    } else {
+        primSchema.GetPrim().SetInstanceable(true);
+    }
     if (_isBillboard) {
         auto keyPath = pxr::TfToken("SketchUp:billboard");
         pxr::VtValue billboard(_isBillboard);
@@ -1458,7 +1463,7 @@ USDExporter::_gatherFaceInfo(const pxr::SdfPath parentPath, SUFaceRef face) {
             return 0;
         }
     }
-    return _addFaceAsTexturedTriangles(face);
+    return _addFaceAsTexturedTriangles(parentPath, face);
 }
 
 std::string
@@ -1496,14 +1501,14 @@ USDExporter::_textureFileName(SUTextureRef textureRef) {
 // - material containing A solid color and A texture
 // so we're guaranteed to have a color, but not a texture
 // we return a bool that corresponds to if we've changed from the default
-void
+bool
 USDExporter::_addFrontFaceMaterial(SUFaceRef face) {
-    _frontRGBA = defaultFrontFaceRGBA;
     SUMaterialRef material = SU_INVALID;
     SUFaceGetFrontMaterial(face, &material);
     if SUIsInvalid(material) {
-        return ;
+        return false;
     }
+    _frontRGBA = defaultFrontFaceRGBA;
     SUColor color;
     SU_RESULT result = SUMaterialGetColor(material, &color);
     if (result == SU_ERROR_NONE) {
@@ -1518,17 +1523,17 @@ USDExporter::_addFrontFaceMaterial(SUFaceRef face) {
     } else {
         _frontFaceTextureName.clear();
     }
-    return ;
+    return true;
 }
 
-void
+bool
 USDExporter::_addBackFaceMaterial(SUFaceRef face) {
-    _backRGBA = defaultBackFaceRGBA;
     SUMaterialRef material = SU_INVALID;
     SUFaceGetBackMaterial(face, &material);
     if SUIsInvalid(material) {
-        return ;
+        return false;
     }
+    _backRGBA = defaultBackFaceRGBA;
     SUColor color;
     SU_RESULT result = SUMaterialGetColor(material, &color);
     if (result == SU_ERROR_NONE) {
@@ -1543,29 +1548,43 @@ USDExporter::_addBackFaceMaterial(SUFaceRef face) {
     } else {
         _backFaceTextureName.clear();
     }
-    return ;
+    return true;
 }
 
 size_t
-USDExporter::_addFaceAsTexturedTriangles(SUFaceRef face) {
+USDExporter::_addFaceAsTexturedTriangles(const pxr::SdfPath parentPath, SUFaceRef face) {
     if (SUIsInvalid(face)) {
         return 0;
     }
     // let's cache our material info - if we have a non-default color & texture
-    _addFrontFaceMaterial(face);
-    _addBackFaceMaterial(face);
-
+    bool frontFaceMaterialExists = _addFrontFaceMaterial(face);
+    bool backFaceMaterialExists = _addBackFaceMaterial(face);
     // Create a triangulated mesh from face.
     SUMeshHelperRef mesh_ref = SU_INVALID;
     SU_CALL(SUMeshHelperCreateWithTextureWriter(&mesh_ref, face,
                                                 _textureWriter));
-    
     size_t num_vertices = 0;
     SU_CALL(SUMeshHelperGetNumVertices(mesh_ref, &num_vertices));
     if (!num_vertices) {
         // free all the memory we allocated here via the SU API
         SU_CALL(SUMeshHelperRelease(&mesh_ref));
         return num_vertices;
+    }
+    if (!frontFaceMaterialExists) {
+        std::cerr << "didn't find a front material at " << parentPath;
+        std::cerr << "but we have a mesh with " << num_vertices;
+        std::cerr << " vertices" << std::endl;
+    } else {
+        std::cerr << "found a front material for " << parentPath;
+        std::cerr << "with rgba " <<  _frontRGBA << std::endl;
+    }
+    if (!backFaceMaterialExists) {
+        std::cerr << "didn't find a back material at " << parentPath;
+        std::cerr << "but we have a mesh with " << num_vertices;
+        std::cerr << " vertices" << std::endl;
+    } else {
+        std::cerr << "found a back material for " << parentPath;
+        std::cerr << "with rgba " <<  _backRGBA << std::endl;
     }
     std::vector<SUPoint3D> vertices(num_vertices);
     SU_CALL(SUMeshHelperGetVertices(mesh_ref, num_vertices,

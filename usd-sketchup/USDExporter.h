@@ -295,10 +295,10 @@ private:
     void _ExportFaces(const pxr::SdfPath parentPath, SUEntitiesRef entities);
     size_t _gatherFaceInfo(const pxr::SdfPath parentPath, SUFaceRef face);
     void _clearFacesExport();
-    size_t _addFaceAsTexturedTriangles(SUFaceRef face);
+    size_t _addFaceAsTexturedTriangles(const pxr::SdfPath parentPath, SUFaceRef face);
     std::string _textureFileName(SUTextureRef textureRef);
-    void _addFrontFaceMaterial(SUFaceRef face);
-    void _addBackFaceMaterial(SUFaceRef face);
+    bool _addFrontFaceMaterial(SUFaceRef face);
+    bool _addBackFaceMaterial(SUFaceRef face);
     int _cacheDisplayMaterial(pxr::SdfPath path, MeshSubset& subset, int index);
     void _cacheRGBAMaterial(pxr::SdfPath path, MeshSubset& subset);
     int _cacheTextureMaterial(pxr::SdfPath path, MeshSubset& subset, int index);
