@@ -196,6 +196,8 @@ private:
     // each mesh as its being constructed. Note that the points, uvs, display
     // color and opacity are all pan-mesh, so we don't need to track them.
     // This is only for material assignment
+    std::map<pxr::SdfPath, int> _materialPathsCounts;
+
     std::vector<MeshSubset> _meshFrontFaceSubsets;
     std::vector<MeshSubset> _meshBackFaceSubsets;
     // Many SketchUp models seem to reuse the same texture on different faces,
@@ -271,6 +273,8 @@ private:
                              std::set<std::string>& usedGroupNames);
 
     pxr::SdfPath _defaultMaterialPath;
+    SUMaterialRef _groupMaterial;
+    void _incrementCountForPath(pxr::SdfPath path);
     void _exportRGBAShader(const pxr::SdfPath path,
                            pxr::UsdShadeOutput materialSurface,
                            pxr::GfVec3f rgb, float opacity);
@@ -313,6 +317,8 @@ private:
                      pxr::VtArray<pxr::GfVec3f>& extent,
                      bool flipNormals,
                      bool doubleSided);
+    std::vector<MeshSubset> _coalesceGeomSubsets(std::vector<MeshSubset> subsets);
+    void _coalesceAllGeomSubsets();
     void _ExportMeshes(const pxr::SdfPath parentPath);
     void _ExportDoubleSidedMesh(const pxr::SdfPath parentPath);
 

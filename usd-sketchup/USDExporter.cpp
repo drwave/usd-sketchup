@@ -203,7 +203,9 @@ USDExporter::_performExport(const std::string& skpSrc,
     _geomSubsetsCount = 0;
     _filePathsForZip.clear();
     _exportTimeSummary.clear();
+    _materialPathsCounts.clear();
     _useSharedFallbackMaterial = false;
+    _groupMaterial = SU_INVALID;
     
     _exportingUSDZ = false;
     SetSkpFileName(skpSrc);
@@ -969,7 +971,10 @@ USDExporter::_ExportGroup(const pxr::SdfPath parentPath, SUGroupRef group,
         namedGroup = true;
     }
     groupName = SafeNameFromExclusionList(groupName, usedGroupNames);
-    
+    SUMaterialRef thisGroupMaterial = SU_INVALID;
+    SUDrawingElementGetMaterial(drawingElement, &thisGroupMaterial);
+    _groupMaterial = thisGroupMaterial;
+
     SUEntitiesRef group_entities = SU_INVALID;
     SU_CALL(SUGroupGetEntities(group, &group_entities));
 
@@ -991,6 +996,7 @@ USDExporter::_ExportGroup(const pxr::SdfPath parentPath, SUGroupRef group,
     // now recursively export all the children, which can contain any
     // valid SketchUp entity.
     _ExportEntities(path, group_entities);
+    _groupMaterial = SU_INVALID;
     
     return groupName;
 }
@@ -1165,11 +1171,19 @@ USDExporter::_exportTextureShader(const pxr::SdfPath path,
 }
 
 void
+USDExporter::_incrementCountForPath(pxr::SdfPath path) {
+    if (_materialPathsCounts.find(path) == _materialPathsCounts.end()) {
+        _materialPathsCounts[path] = 0;
+        _materialsCount++;
+    }
+    _materialPathsCounts[path] = 1 + _materialPathsCounts[path];
+}
+
+void
 USDExporter::_ExportTextureMaterial(const pxr::SdfPath path,
                                     std::string texturePath) {
-    _materialsCount++;
-    auto mSchema = pxr::UsdShadeMaterial::Define(_stage,
-                                                 pxr::SdfPath(path));
+    _incrementCountForPath(path);
+    auto mSchema = pxr::UsdShadeMaterial::Define(_stage, path);
     auto materialSurface = mSchema.CreateOutput(pxr::TfToken("surface"),
                                                 pxr::SdfValueTypeNames->Token);
     auto diffuseColor_opacity = _exportPreviewShader(path, materialSurface);
@@ -1183,9 +1197,8 @@ USDExporter::_ExportTextureMaterial(const pxr::SdfPath path,
 void
 USDExporter::_ExportRGBAMaterial(const pxr::SdfPath path,
                                  pxr::GfVec3f rgb, float opacity) {
-    _materialsCount++;
-    auto mSchema = pxr::UsdShadeMaterial::Define(_stage,
-                                                 pxr::SdfPath(path));
+    _incrementCountForPath(path);
+    auto mSchema = pxr::UsdShadeMaterial::Define(_stage, path);
     auto materialSurface = mSchema.CreateOutput(pxr::TfToken("surface"),
                                                 pxr::SdfValueTypeNames->Token);
     _exportRGBAShader(path, materialSurface, rgb, opacity);
@@ -1193,9 +1206,8 @@ USDExporter::_ExportRGBAMaterial(const pxr::SdfPath path,
 
 void
 USDExporter::_ExportDisplayMaterial(const pxr::SdfPath path) {
-    _materialsCount++;
-    auto mSchema = pxr::UsdShadeMaterial::Define(_stage,
-                                                 pxr::SdfPath(path));
+    _incrementCountForPath(path);
+    auto mSchema = pxr::UsdShadeMaterial::Define(_stage, path);
     auto materialSurface = mSchema.CreateOutput(pxr::TfToken("surface"),
                                                 pxr::SdfValueTypeNames->Token);
     auto diffuseColor_opacity = _exportPreviewShader(path, materialSurface);
@@ -1506,7 +1518,12 @@ USDExporter::_addFrontFaceMaterial(SUFaceRef face) {
     SUMaterialRef material = SU_INVALID;
     SUFaceGetFrontMaterial(face, &material);
     if SUIsInvalid(material) {
-        return false;
+        if (!SUIsInvalid(_groupMaterial)) {
+            //std::cerr << "no front material, using group material" << std::endl;
+            material = _groupMaterial;
+        } else {
+            return false;
+        }
     }
     _frontRGBA = defaultFrontFaceRGBA;
     SUColor color;
@@ -1531,7 +1548,12 @@ USDExporter::_addBackFaceMaterial(SUFaceRef face) {
     SUMaterialRef material = SU_INVALID;
     SUFaceGetBackMaterial(face, &material);
     if SUIsInvalid(material) {
-        return false;
+        if (!SUIsInvalid(_groupMaterial)) {
+            //std::cerr << "no back material, using group material" << std::endl;
+            material = _groupMaterial;
+        } else {
+            return false;
+        }
     }
     _backRGBA = defaultBackFaceRGBA;
     SUColor color;
@@ -1557,8 +1579,8 @@ USDExporter::_addFaceAsTexturedTriangles(const pxr::SdfPath parentPath, SUFaceRe
         return 0;
     }
     // let's cache our material info - if we have a non-default color & texture
-    bool frontFaceMaterialExists = _addFrontFaceMaterial(face);
-    bool backFaceMaterialExists = _addBackFaceMaterial(face);
+    //bool frontFaceMaterialExists = _addFrontFaceMaterial(face);
+    //bool backFaceMaterialExists = _addBackFaceMaterial(face);
     // Create a triangulated mesh from face.
     SUMeshHelperRef mesh_ref = SU_INVALID;
     SU_CALL(SUMeshHelperCreateWithTextureWriter(&mesh_ref, face,
@@ -1570,22 +1592,18 @@ USDExporter::_addFaceAsTexturedTriangles(const pxr::SdfPath parentPath, SUFaceRe
         SU_CALL(SUMeshHelperRelease(&mesh_ref));
         return num_vertices;
     }
+    /*
     if (!frontFaceMaterialExists) {
         std::cerr << "didn't find a front material at " << parentPath;
-        std::cerr << "but we have a mesh with " << num_vertices;
+        std::cerr << " but we have a mesh with " << num_vertices;
         std::cerr << " vertices" << std::endl;
-    } else {
-        std::cerr << "found a front material for " << parentPath;
-        std::cerr << "with rgba " <<  _frontRGBA << std::endl;
     }
     if (!backFaceMaterialExists) {
         std::cerr << "didn't find a back material at " << parentPath;
-        std::cerr << "but we have a mesh with " << num_vertices;
+        std::cerr << " but we have a mesh with " << num_vertices;
         std::cerr << " vertices" << std::endl;
-    } else {
-        std::cerr << "found a back material for " << parentPath;
-        std::cerr << "with rgba " <<  _backRGBA << std::endl;
     }
+    */
     std::vector<SUPoint3D> vertices(num_vertices);
     SU_CALL(SUMeshHelperGetVertices(mesh_ref, num_vertices,
                                     &vertices[0], &num_vertices));
@@ -1787,6 +1805,48 @@ USDExporter::_exportMesh(pxr::SdfPath path,
 }
 
 void
+USDExporter::_coalesceAllGeomSubsets() {
+    _meshFrontFaceSubsets = _coalesceGeomSubsets(_meshFrontFaceSubsets);
+    _meshBackFaceSubsets = _coalesceGeomSubsets(_meshBackFaceSubsets);
+}
+
+std::vector<MeshSubset>
+USDExporter::_coalesceGeomSubsets(std::vector<MeshSubset> originalSubsets) {
+    std::vector<MeshSubset> newSubsets;
+    std::map<pxr::SdfPath, std::vector<MeshSubset>> pathSubsets;
+    for (MeshSubset& subset : originalSubsets) {
+        pxr::SdfPath path = subset.GetMaterialPath();
+        if (pathSubsets.find(path) == pathSubsets.end()) {
+            std::vector<MeshSubset> list;
+            list.push_back(subset);
+            pathSubsets[path] = list;
+        } else {
+            std::vector<MeshSubset>& list = pathSubsets[path];
+            list.push_back(subset);
+        }
+    }
+    for (std::map<pxr::SdfPath, std::vector<MeshSubset>>::iterator it=pathSubsets.begin(); it!=pathSubsets.end(); ++it) {
+        pxr::SdfPath path = it->first;
+        std::vector<MeshSubset> list = it->second;
+        pxr::VtArray<int> faceIndices;
+        for (MeshSubset& subset : list) {
+            pxr::VtArray<int> theseIndices = subset.GetFaceIndices();
+            size_t faceSize = faceIndices.size();
+            faceIndices.resize(faceIndices.size() + theseIndices.size());
+            std::copy(theseIndices.begin(), theseIndices.end(), faceIndices.begin() + faceSize);
+        }
+        MeshSubset& firstSubset = list[0];
+        std::string textureName = firstSubset.GetMaterialTextureName();
+        pxr::GfVec3f rgb = firstSubset.GetRGB();
+        float opacity = firstSubset.GetOpacity();
+        MeshSubset coalescedSubset = MeshSubset(textureName, rgb, opacity, faceIndices);
+        coalescedSubset.SetMaterialPath(path);
+        newSubsets.push_back(coalescedSubset);
+    }
+    return newSubsets;
+}
+
+void
 USDExporter::_ExportMeshes(const pxr::SdfPath parentPath) {
     // In SketchUp, each face has two distinct sides. USD can have double-sided
     // geometry, but both sides would have the same material assignment.
@@ -1799,6 +1859,9 @@ USDExporter::_ExportMeshes(const pxr::SdfPath parentPath) {
     pxr::UsdGeomPointBased::ComputeExtent(_points, &extent);
     const pxr::TfToken materials("Materials");
     pxr::SdfPath materialsPath = parentPath.AppendChild(materials);
+    
+    _coalesceAllGeomSubsets();
+    
     // this is a little clunky, because SdfPath("") will print out a warning
     // so we explicitly set it to "EmptyPath()" if there isn't a material
     const pxr::TfToken front("FrontMaterial");
