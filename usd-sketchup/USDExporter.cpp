@@ -1023,6 +1023,7 @@ USDExporter::_clearFacesExport() {
     _texturePathMaterialPath.clear();
 }
 
+#pragma mark Shaders:
 
 void
 USDExporter::_exportRGBAShader(const pxr::SdfPath path,
@@ -1178,6 +1179,8 @@ USDExporter::_incrementCountForPath(pxr::SdfPath path) {
     }
     _materialPathsCounts[path] = 1 + _materialPathsCounts[path];
 }
+
+#pragma mark Materials:
 
 void
 USDExporter::_ExportTextureMaterial(const pxr::SdfPath path,
@@ -1382,6 +1385,7 @@ USDExporter::_bothDisplayOpacityAreEqual() {
     return true;
 }
 
+#pragma mark Faces:
 
 void
 USDExporter::_ExportFaces(const pxr::SdfPath parentPath,
@@ -1579,8 +1583,8 @@ USDExporter::_addFaceAsTexturedTriangles(const pxr::SdfPath parentPath, SUFaceRe
         return 0;
     }
     // let's cache our material info - if we have a non-default color & texture
-    //bool frontFaceMaterialExists = _addFrontFaceMaterial(face);
-    //bool backFaceMaterialExists = _addBackFaceMaterial(face);
+    _addFrontFaceMaterial(face);
+    _addBackFaceMaterial(face);
     // Create a triangulated mesh from face.
     SUMeshHelperRef mesh_ref = SU_INVALID;
     SU_CALL(SUMeshHelperCreateWithTextureWriter(&mesh_ref, face,
@@ -1684,6 +1688,50 @@ USDExporter::_addFaceAsTexturedTriangles(const pxr::SdfPath parentPath, SUFaceRe
     // free all the memory we allocated here via the SU API
     SU_CALL(SUMeshHelperRelease(&mesh_ref));
     return num_triangles;
+}
+
+#pragma mark Mesh:
+
+void
+USDExporter::_coalesceAllGeomSubsets() {
+    _meshFrontFaceSubsets = _coalesceGeomSubsets(_meshFrontFaceSubsets);
+    _meshBackFaceSubsets = _coalesceGeomSubsets(_meshBackFaceSubsets);
+}
+
+std::vector<MeshSubset>
+USDExporter::_coalesceGeomSubsets(std::vector<MeshSubset> originalSubsets) {
+    std::vector<MeshSubset> newSubsets;
+    std::map<pxr::SdfPath, std::vector<MeshSubset>> pathSubsets;
+    for (MeshSubset& subset : originalSubsets) {
+        pxr::SdfPath path = subset.GetMaterialPath();
+        if (pathSubsets.find(path) == pathSubsets.end()) {
+            std::vector<MeshSubset> list;
+            list.push_back(subset);
+            pathSubsets[path] = list;
+        } else {
+            std::vector<MeshSubset>& list = pathSubsets[path];
+            list.push_back(subset);
+        }
+    }
+    for (std::map<pxr::SdfPath, std::vector<MeshSubset>>::iterator it=pathSubsets.begin(); it!=pathSubsets.end(); ++it) {
+        pxr::SdfPath path = it->first;
+        std::vector<MeshSubset> list = it->second;
+        pxr::VtArray<int> faceIndices;
+        for (MeshSubset& subset : list) {
+            pxr::VtArray<int> theseIndices = subset.GetFaceIndices();
+            size_t faceSize = faceIndices.size();
+            faceIndices.resize(faceIndices.size() + theseIndices.size());
+            std::copy(theseIndices.begin(), theseIndices.end(), faceIndices.begin() + faceSize);
+        }
+        MeshSubset& firstSubset = list[0];
+        std::string textureName = firstSubset.GetMaterialTextureName();
+        pxr::GfVec3f rgb = firstSubset.GetRGB();
+        float opacity = firstSubset.GetOpacity();
+        MeshSubset coalescedSubset = MeshSubset(textureName, rgb, opacity, faceIndices);
+        coalescedSubset.SetMaterialPath(path);
+        newSubsets.push_back(coalescedSubset);
+    }
+    return newSubsets;
 }
 
 void
@@ -1802,48 +1850,6 @@ USDExporter::_exportMesh(pxr::SdfPath path,
         prim.CreateRelationship(relName).AddTarget(materialPath);
     }
     return ;
-}
-
-void
-USDExporter::_coalesceAllGeomSubsets() {
-    _meshFrontFaceSubsets = _coalesceGeomSubsets(_meshFrontFaceSubsets);
-    _meshBackFaceSubsets = _coalesceGeomSubsets(_meshBackFaceSubsets);
-}
-
-std::vector<MeshSubset>
-USDExporter::_coalesceGeomSubsets(std::vector<MeshSubset> originalSubsets) {
-    std::vector<MeshSubset> newSubsets;
-    std::map<pxr::SdfPath, std::vector<MeshSubset>> pathSubsets;
-    for (MeshSubset& subset : originalSubsets) {
-        pxr::SdfPath path = subset.GetMaterialPath();
-        if (pathSubsets.find(path) == pathSubsets.end()) {
-            std::vector<MeshSubset> list;
-            list.push_back(subset);
-            pathSubsets[path] = list;
-        } else {
-            std::vector<MeshSubset>& list = pathSubsets[path];
-            list.push_back(subset);
-        }
-    }
-    for (std::map<pxr::SdfPath, std::vector<MeshSubset>>::iterator it=pathSubsets.begin(); it!=pathSubsets.end(); ++it) {
-        pxr::SdfPath path = it->first;
-        std::vector<MeshSubset> list = it->second;
-        pxr::VtArray<int> faceIndices;
-        for (MeshSubset& subset : list) {
-            pxr::VtArray<int> theseIndices = subset.GetFaceIndices();
-            size_t faceSize = faceIndices.size();
-            faceIndices.resize(faceIndices.size() + theseIndices.size());
-            std::copy(theseIndices.begin(), theseIndices.end(), faceIndices.begin() + faceSize);
-        }
-        MeshSubset& firstSubset = list[0];
-        std::string textureName = firstSubset.GetMaterialTextureName();
-        pxr::GfVec3f rgb = firstSubset.GetRGB();
-        float opacity = firstSubset.GetOpacity();
-        MeshSubset coalescedSubset = MeshSubset(textureName, rgb, opacity, faceIndices);
-        coalescedSubset.SetMaterialPath(path);
-        newSubsets.push_back(coalescedSubset);
-    }
-    return newSubsets;
 }
 
 void
