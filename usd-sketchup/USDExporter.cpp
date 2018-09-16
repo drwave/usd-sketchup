@@ -1896,24 +1896,10 @@ USDExporter::_ExportMeshes(const pxr::SdfPath parentPath) {
     
     _coalesceAllGeomSubsets();
     
-    // this is a little clunky, because SdfPath("") will print out a warning
-    // so we explicitly set it to "EmptyPath()" if there isn't a material
-    const pxr::TfToken front("FrontMaterial");
-    pxr::SdfPath frontMaterialsPath = materialsPath.AppendChild(front);
-    if (_frontFaceTextureName.empty()) {
-        frontMaterialsPath = pxr::SdfPath::EmptyPath();
-    }
-    //std::cerr << "appending front " << frontSide << " to parentPath" << parentPath << std::endl;
     pxr::SdfPath frontPath = parentPath.AppendChild(pxr::TfToken(frontSide));
     _exportMesh(frontPath, _meshFrontFaceSubsets,
                 pxr::UsdGeomTokens->rightHanded,
                 _frontFaceRGBs, _frontFaceAs, _frontUVs, extent, false, false);
-
-    const pxr::TfToken back("BackMaterial");
-    pxr::SdfPath backMaterialsPath = materialsPath.AppendChild(back);
-    if (_backFaceTextureName.empty()) {
-        backMaterialsPath = pxr::SdfPath::EmptyPath();
-    }
     pxr::SdfPath backPath = parentPath.AppendChild(pxr::TfToken(backSide));
     _exportMesh(backPath, _meshBackFaceSubsets,
                 pxr::UsdGeomTokens->leftHanded,
@@ -1927,11 +1913,18 @@ USDExporter::_ExportDoubleSidedMesh(const pxr::SdfPath parentPath) {
     // its own material. But in the case where the mesh doesn't have a material
     // assigned on either side or where the material assignments are the same,
     // it makes sense to put out the mesh once and just mark it as double-sided.
+    // We also might have a situation where we don't see the backside, so
+    // omitting it will save space.
     pxr::VtArray<pxr::GfVec3f> extent(2);
     pxr::UsdGeomPointBased::ComputeExtent(_points, &extent);
+    
+    const pxr::TfToken materials("Materials");
+    pxr::SdfPath materialsPath = parentPath.AppendChild(materials);
+    
+    _coalesceAllGeomSubsets();
+    
     pxr::SdfPath path = parentPath.AppendChild(pxr::TfToken(bothSides));
-    std::vector<MeshSubset> empty;
-    _exportMesh(path, empty,
+    _exportMesh(path, _meshFrontFaceSubsets,
                 pxr::UsdGeomTokens->rightHanded,
                 _frontFaceRGBs, _frontFaceAs, _frontUVs, extent, false, true);
     _clearFacesExport(); // free the info
