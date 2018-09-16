@@ -98,6 +98,7 @@ public:
     bool GetExportMaterials() const;
     bool GetExportMeshes() const;
     bool GetExportCameras() const;
+    bool GetExportDoubleSided() const;
 
     void SetSkpFileName(const std::string name);
     void SetUSDFileName(const std::string name);
@@ -110,6 +111,7 @@ public:
     void SetExportMaterials(bool flag);
     void SetExportMeshes(bool flag);
     void SetExportCameras(bool flag);
+    void SetExportDoubleSided(bool flag);
 
     double GetAspectRatio() const;
     double GetSensorHeight() const;
@@ -162,6 +164,7 @@ private:
     bool _exportMaterials;
     bool _exportMeshes;
     bool _exportCameras;
+    bool _exportDoubleSided;
     double _aspectRatio;
     double _sensorHeight;
     double _startFrame;
@@ -272,6 +275,7 @@ private:
     std::string _ExportGroup(const pxr::SdfPath parentPath, SUGroupRef group,
                              std::set<std::string>& usedGroupNames);
 
+    std::string _materialDefinitionsFileName;
     pxr::SdfPath _defaultMaterialPath;
     SUMaterialRef _groupMaterial;
     void _incrementCountForPath(pxr::SdfPath path);
@@ -319,6 +323,7 @@ private:
                      bool doubleSided);
     std::vector<MeshSubset> _coalesceGeomSubsets(std::vector<MeshSubset> subsets);
     void _coalesceAllGeomSubsets();
+    bool _reallyExportDoubleSided(const pxr::SdfPath parentPath);
     void _ExportMeshes(const pxr::SdfPath parentPath);
     void _ExportDoubleSidedMesh(const pxr::SdfPath parentPath);
 

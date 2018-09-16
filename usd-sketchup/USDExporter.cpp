@@ -154,6 +154,7 @@ USDExporter::USDExporter(): _model(SU_INVALID), _textureWriter(SU_INVALID) {
     SetExportCurves(true);
     SetExportToSingleFile(false);
     SetExportARKitCompatibleUSDZ(true);
+    SetExportDoubleSided(true);
     SetAspectRatio(16.0/9.0);
     SetSensorHeight(24.0);
     SetStartFrame(101.0);
@@ -385,6 +386,11 @@ USDExporter::GetExportCameras()const {
     return _exportCameras;
 }
 
+bool
+USDExporter::GetExportDoubleSided()const {
+    return _exportDoubleSided;
+}
+
 void
 USDExporter::_updateFileNames() {
     _baseFileName = _usdFileName;
@@ -472,6 +478,11 @@ USDExporter::SetExportMeshes(bool flag) {
 void
 USDExporter::SetExportCameras(bool flag) {
     _exportCameras = flag;
+}
+
+void
+USDExporter::SetExportDoubleSided(bool flag) {
+    _exportDoubleSided = flag;
 }
 
 double
@@ -630,6 +641,18 @@ USDExporter::_ExportComponentDefinition(const pxr::SdfPath parentPath,
     // so we can find this name given an instance
     _componentPtrSafeNameMap[index] = cName;
     
+    SUEntityRef entity = SUComponentDefinitionToEntity(comp_def);
+    if (SUIsValid(entity)) {
+        SUDrawingElementRef de = SUDrawingElementFromEntity(entity);
+        if (SUIsValid(de)) {
+            SUMaterialRef thisComponentMaterial = SU_INVALID;
+            SUDrawingElementGetMaterial(de, &thisComponentMaterial);
+            if (SUIsValid(thisComponentMaterial)) {
+                //std::cerr << "found a material on the component definition" << std::endl;
+                _groupMaterial = thisComponentMaterial;
+            }
+        }
+    }
     SUEntitiesRef entities = SU_INVALID;
     SUComponentDefinitionGetEntities(comp_def, &entities);
     
@@ -757,6 +780,9 @@ USDExporter::_ExportTextures(const pxr::SdfPath parentPath) {
 
 void
 USDExporter::_ExportFallbackDisplayMaterial(const pxr::SdfPath path) {
+    //std::cerr << "NOT exporting fallback material" << std::endl;
+    //_useSharedFallbackMaterial = false;
+    //return ;
     _useSharedFallbackMaterial = true;
     std::string materialName = "FallbackDisplayMaterial";
     _fallbackDisplayMaterialPath = path.AppendChild(pxr::TfToken(materialName));
@@ -864,6 +890,13 @@ USDExporter::_ExportInstance(const pxr::SdfPath parentPath,
             return false;
         }
     }
+    SUMaterialRef thisComponentMaterial = SU_INVALID;
+    SUDrawingElementGetMaterial(de, &thisComponentMaterial);
+    if (SUIsValid(thisComponentMaterial)) {
+        //std::cerr << "found a material on the component instance" << std::endl;
+        _groupMaterial = thisComponentMaterial;
+    }
+
     // we want to keep track of how many instances for a given master/class
     // we've declared, so that we can name them with a running value.
     auto status = _instanceCountPerClass.emplace(cName, 0);
@@ -999,28 +1032,6 @@ USDExporter::_ExportGroup(const pxr::SdfPath parentPath, SUGroupRef group,
     _groupMaterial = SU_INVALID;
     
     return groupName;
-}
-
-#pragma mark Meshes:
-void
-USDExporter::_clearFacesExport() {
-    _points.clear();
-    _vertexNormals.clear();
-    _vertexFlippedNormals.clear();
-    _frontFaceTextureName.clear();
-    _frontFaceTextureName.clear();
-    _backUVs.clear();
-    _frontUVs.clear();
-    _frontFaceRGBs.clear();
-    _frontFaceAs.clear();
-    _backFaceRGBs.clear();
-    _backFaceAs.clear();
-    _faceVertexCounts.clear();
-    _flattenedFaceVertexIndices.clear();
-    _currentVertexIndex = 0;
-    _meshFrontFaceSubsets.clear();
-    _meshBackFaceSubsets.clear();
-    _texturePathMaterialPath.clear();
 }
 
 #pragma mark Shaders:
@@ -1290,6 +1301,8 @@ USDExporter::_cacheRGBAMaterial(pxr::SdfPath path, MeshSubset& subset) {
 
 bool
 USDExporter::_someMaterialsToExport() {
+    return true;
+    /*
     for (MeshSubset& subset : _meshFrontFaceSubsets) {
         if (!subset.GetMaterialTextureName().empty()) {
             return true;
@@ -1309,6 +1322,7 @@ USDExporter::_someMaterialsToExport() {
     // there are no textures and all the display subsets are just referencing
     // the shared fallback material
     return false;
+     */
 }
 
 bool
@@ -1358,12 +1372,14 @@ USDExporter::_ExportMaterials(const pxr::SdfPath parentPath) {
 bool
 USDExporter::_bothDisplayColorAreEqual() {
     if (_frontFaceRGBs.size() != _backFaceRGBs.size()) {
+        //std::cerr << "display color lengths different" << std::endl;
         return false;
     }
     for (int i = 0; i < _frontFaceRGBs.size(); i++) {
         pxr::GfVec3f frontFaceRGB = _frontFaceRGBs[i];
         pxr::GfVec3f backFaceRGB = _backFaceRGBs[i];
         if (frontFaceRGB != backFaceRGB) {
+            //std::cerr << "one of the display color values are different" << std::endl;
             return false;
         }
     }
@@ -1373,12 +1389,14 @@ USDExporter::_bothDisplayColorAreEqual() {
 bool
 USDExporter::_bothDisplayOpacityAreEqual() {
     if (_frontFaceAs.size() != _backFaceAs.size()) {
+        //std::cerr << "display opacity lengths different" << std::endl;
         return false;
     }
     for (int i = 0; i < _frontFaceAs.size(); i++) {
         float frontFaceA = _frontFaceAs[i];
         float backFaceA = _backFaceAs[i];
         if (frontFaceA != backFaceA) {
+            //std::cerr << "one of the display opacity values are different" << std::endl;
             return false;
         }
     }
@@ -1386,6 +1404,17 @@ USDExporter::_bothDisplayOpacityAreEqual() {
 }
 
 #pragma mark Faces:
+bool
+USDExporter::_reallyExportDoubleSided(const pxr::SdfPath parentPath) {
+    if (GetExportDoubleSided()) {
+        return true;
+    }
+    if (_bothDisplayColorAreEqual() && _bothDisplayOpacityAreEqual()) {
+        return true;
+    }
+    //std::cerr << "unable to export " << parentPath << " double-sided" << std::endl;
+    return false;
+}
 
 void
 USDExporter::_ExportFaces(const pxr::SdfPath parentPath,
@@ -1428,33 +1457,11 @@ USDExporter::_ExportFaces(const pxr::SdfPath parentPath,
         }
     }
     if (exportedFaceCount) {
-        if (GetExportMaterials()) {
-            // if we exported any materials, then we should export two copies of
-            // the mesh, one facing forward and one facing backwards.
-            if (_ExportMaterials(parentPath)) {
-                _ExportMeshes(parentPath);
-            } else {
-                // if we didn't export any materials, and the color is the same
-                // on both sides of the face, we can put out a single
-                // double-sided mesh, otherwise we need to put out a
-                // front-facing mesh and a back-facing mesh, each with their
-                // own displayColor and Opacity
-                if (_bothDisplayColorAreEqual() && _bothDisplayOpacityAreEqual()) {
-                    _ExportDoubleSidedMesh(parentPath);
-                } else {
-                    _ExportMeshes(parentPath);
-                }
-            }
+        _ExportMaterials(parentPath);
+        if (_reallyExportDoubleSided(parentPath)) {
+            _ExportDoubleSidedMesh(parentPath);
         } else {
-            // If the color is the same on both sides of the face, we can
-            // put out a single double-sided mesh, otherwise we need to put
-            // out a front-facing mesh and a back-facing mesh, each with
-            // their own displayColor and Opacity
-            if (_bothDisplayColorAreEqual() && _bothDisplayOpacityAreEqual()) {
-                _ExportDoubleSidedMesh(parentPath);
-            } else {
-                _ExportMeshes(parentPath);
-            }
+            _ExportMeshes(parentPath);
         }
     }
 }
@@ -1690,7 +1697,28 @@ USDExporter::_addFaceAsTexturedTriangles(const pxr::SdfPath parentPath, SUFaceRe
     return num_triangles;
 }
 
-#pragma mark Mesh:
+#pragma mark Meshes:
+void
+USDExporter::_clearFacesExport() {
+    _points.clear();
+    _vertexNormals.clear();
+    _vertexFlippedNormals.clear();
+    _frontFaceTextureName.clear();
+    _frontFaceTextureName.clear();
+    _backUVs.clear();
+    _frontUVs.clear();
+    _frontFaceRGBs.clear();
+    _frontFaceAs.clear();
+    _backFaceRGBs.clear();
+    _backFaceAs.clear();
+    _faceVertexCounts.clear();
+    _flattenedFaceVertexIndices.clear();
+    _currentVertexIndex = 0;
+    _meshFrontFaceSubsets.clear();
+    _meshBackFaceSubsets.clear();
+    _texturePathMaterialPath.clear();
+}
+
 
 void
 USDExporter::_coalesceAllGeomSubsets() {
@@ -1890,7 +1918,6 @@ USDExporter::_ExportMeshes(const pxr::SdfPath parentPath) {
     _exportMesh(backPath, _meshBackFaceSubsets,
                 pxr::UsdGeomTokens->leftHanded,
                 _backFaceRGBs, _backFaceAs, _backUVs, extent, true, false);
-
     _clearFacesExport(); // free the info
 }
 

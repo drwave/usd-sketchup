@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14313.13.2" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14313.13.2"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14313.18"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -12,6 +12,7 @@
                 <outlet property="exportARKitCompatibleCheck" destination="0kF-QY-BuM" id="yva-6L-8uL"/>
                 <outlet property="exportCamerasCheck" destination="x34-j4-kwM" id="uSr-eX-cyP"/>
                 <outlet property="exportCurvesCheck" destination="CdF-9B-rwv" id="3xQ-bi-KYn"/>
+                <outlet property="exportDoubleSidedCheck" destination="p5T-Zc-bbS" id="oGf-mg-JnE"/>
                 <outlet property="exportEdgesCheck" destination="dB2-LX-Da2" id="QuA-uw-Vmw"/>
                 <outlet property="exportLinesCheck" destination="Tpa-4C-aTy" id="HfU-at-HoI"/>
                 <outlet property="exportMaterialsCheck" destination="Giq-f0-ERZ" id="sDa-Zp-dCi"/>
@@ -48,7 +49,7 @@
                                     <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                     <size key="minSize" width="311" height="248"/>
-                                    <size key="maxSize" width="311" height="10000000"/>
+                                    <size key="maxSize" width="328" height="10000000"/>
                                     <color key="insertionPointColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                 </textView>
                             </subviews>
@@ -82,11 +83,11 @@ DQ
         </window>
         <window title="Export USD Options" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="7lF-kY-ffV" userLabel="OptionsPanel" customClass="NSPanel">
             <windowStyleMask key="styleMask" titled="YES"/>
-            <rect key="contentRect" x="510" y="356" width="290" height="281"/>
+            <rect key="contentRect" x="510" y="356" width="290" height="296"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1680" height="1028"/>
             <value key="minSize" type="size" width="290" height="135"/>
             <view key="contentView" autoresizesSubviews="NO" id="BuE-Ox-AUV">
-                <rect key="frame" x="0.0" y="0.0" width="290" height="281"/>
+                <rect key="frame" x="0.0" y="0.0" width="290" height="296"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kMM-wf-Ewe">
@@ -118,7 +119,7 @@ Gw
                         </connections>
                     </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="SwC-ei-Vod">
-                        <rect key="frame" x="18" y="119" width="254" height="18"/>
+                        <rect key="frame" x="18" y="113" width="254" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Export Normals" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="ycc-UU-df8">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -129,7 +130,7 @@ Gw
                         </connections>
                     </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="MUO-uP-JEf">
-                        <rect key="frame" x="18" y="139" width="254" height="18"/>
+                        <rect key="frame" x="18" y="133" width="254" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Export To a Single File" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="LeM-mx-po1">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -140,7 +141,7 @@ Gw
                         </connections>
                     </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0kF-QY-BuM">
-                        <rect key="frame" x="18" y="161" width="254" height="18"/>
+                        <rect key="frame" x="18" y="173" width="254" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Export as ARKit Compatible" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="au9-3T-LBK">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -151,7 +152,7 @@ Gw
                         </connections>
                     </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Giq-f0-ERZ">
-                        <rect key="frame" x="18" y="181" width="254" height="18"/>
+                        <rect key="frame" x="18" y="193" width="254" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Export Materials" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="U8f-Xt-g0J">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -162,7 +163,7 @@ Gw
                         </connections>
                     </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="x34-j4-kwM">
-                        <rect key="frame" x="18" y="201" width="254" height="18"/>
+                        <rect key="frame" x="18" y="213" width="254" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Export Cameras" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="KCy-bJ-VYF">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -173,7 +174,7 @@ Gw
                         </connections>
                     </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CdF-9B-rwv">
-                        <rect key="frame" x="18" y="99" width="254" height="18"/>
+                        <rect key="frame" x="18" y="93" width="254" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Export Curves" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="DQE-69-yLf">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -184,7 +185,7 @@ Gw
                         </connections>
                     </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Tpa-4C-aTy">
-                        <rect key="frame" x="18" y="79" width="254" height="18"/>
+                        <rect key="frame" x="18" y="73" width="254" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Export Lines" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="PfP-Ek-mSj">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -195,7 +196,7 @@ Gw
                         </connections>
                     </button>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dB2-LX-Da2">
-                        <rect key="frame" x="18" y="59" width="254" height="18"/>
+                        <rect key="frame" x="18" y="53" width="254" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Export Edges" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="hYp-vA-6yP">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -205,8 +206,19 @@ Gw
                             <action selector="takeExportEdges:" target="-2" id="FNy-is-X3w"/>
                         </connections>
                     </button>
+                    <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="p5T-Zc-bbS">
+                        <rect key="frame" x="18" y="153" width="254" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="check" title="Export Double-Sided" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="Mnm-sR-xUA">
+                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="takeDoubleSided:" target="-2" id="25z-1p-krO"/>
+                        </connections>
+                    </button>
                     <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8Lo-NK-X0J">
-                        <rect key="frame" x="20" y="242" width="50" height="22"/>
+                        <rect key="frame" x="20" y="254" width="50" height="22"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="right" title="1" drawsBackground="YES" id="nIF-8x-nmq">
                             <font key="font" metaFont="system"/>
@@ -218,7 +230,7 @@ Gw
                         </connections>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="DJY-Yt-tHg">
-                        <rect key="frame" x="69" y="244" width="95" height="17"/>
+                        <rect key="frame" x="69" y="256" width="95" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title=":1  AspectRatio" id="zeB-Sn-32t">
                             <font key="font" metaFont="system"/>
@@ -227,7 +239,7 @@ Gw
                         </textFieldCell>
                     </textField>
                     <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="U74-Jt-SHY">
-                        <rect key="frame" x="18" y="221" width="254" height="18"/>
+                        <rect key="frame" x="18" y="233" width="254" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Export Meshes" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="WCJ-aw-5HI">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -239,7 +251,7 @@ Gw
                     </button>
                 </subviews>
             </view>
-            <point key="canvasLocation" x="-497" y="-1065.5"/>
+            <point key="canvasLocation" x="-497" y="-1058"/>
         </window>
     </objects>
 </document>

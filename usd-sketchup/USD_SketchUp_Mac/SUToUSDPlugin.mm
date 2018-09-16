@@ -126,6 +126,7 @@ public:
     SET_STATE(exportMeshesCheck, _plugin->GetExportMeshes());
     SET_STATE(exportCamerasCheck, _plugin->GetExportCameras());
     SET_STATE(exportARKitCompatibleCheck, _plugin->GetExportARKitCompatible());
+    SET_STATE(exportDoubleSidedCheck, _plugin->GetExportDoubleSided());
 }
 
 // Set the options from those selected in the dialog
@@ -139,6 +140,7 @@ public:
     _plugin->SetExportMeshes(GET_STATE(exportMeshesCheck));
     _plugin->SetExportCameras(GET_STATE(exportCamerasCheck));
     _plugin->SetExportARKitCompatible(GET_STATE(exportARKitCompatibleCheck));
+    _plugin->SetExportDoubleSided(GET_STATE(exportDoubleSidedCheck));
 }
 
 // Close the a panel started with [NSApp runModalForWindow:]
@@ -226,6 +228,11 @@ public:
 - (IBAction)takeARKitCompatible:(id)sender {
     BOOL flag = [sender intValue];
     _plugin->SetExportARKitCompatible(flag);
+}
+
+- (IBAction)takeDoubleSided:(id)sender {
+    BOOL flag = [sender intValue];
+    _plugin->SetExportDoubleSided(flag);
 }
 
 @end

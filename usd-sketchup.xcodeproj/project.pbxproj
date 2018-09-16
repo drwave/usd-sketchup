@@ -537,7 +537,7 @@
 		4052B657212F6EAC002B6746 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = QS29RJP6TK;
@@ -551,6 +551,7 @@
 				OTHER_LDFLAGS = "-headerpad_max_install_names";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.sketchup.exporters.usd-sketchup";
 				PRODUCT_NAME = USDExporter;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
 				WRAPPER_EXTENSION = plugin;
 			};
@@ -559,7 +560,7 @@
 		4052B658212F6EAC002B6746 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = QS29RJP6TK;
@@ -573,6 +574,7 @@
 				OTHER_LDFLAGS = "-headerpad_max_install_names";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.sketchup.exporters.usd-sketchup";
 				PRODUCT_NAME = USDExporter;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
 				WRAPPER_EXTENSION = plugin;
 			};

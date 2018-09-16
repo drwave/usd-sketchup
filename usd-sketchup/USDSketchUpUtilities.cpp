@@ -178,8 +178,9 @@ USDExporterPlugin::USDExporterPlugin(): _exportMeshes(true),
                                         _exportCameras(true),
                                         _exportMaterials(true),
                                         _exportARKitCompatible(true),
+                                        _exportDoubleSided(true),
                                         _exportNormals(false),
-                                        _aspectRatio(1.33),
+                                        _aspectRatio(16.0/9.0),
                                         _exportEdges(false),
                                         _exportLines(false),
                                         _exportCurves(false),
@@ -277,6 +278,11 @@ USDExporterPlugin::GetExportARKitCompatible() {
     return _exportMeshes;
 }
 
+bool
+USDExporterPlugin::GetExportDoubleSided() {
+    return _exportDoubleSided;
+}
+
 void
 USDExporterPlugin::SetAspectRatio(double ratio) {
     _aspectRatio = ratio;
@@ -328,6 +334,11 @@ USDExporterPlugin::SetExportARKitCompatible(bool flag) {
 }
 
 void
+USDExporterPlugin::SetExportDoubleSided(bool flag) {
+    _exportDoubleSided = flag;
+}
+
+void
 USDExporterPlugin::ShowSummaryDialog()  {
     if (!_summaryStr.empty()) {
         ShowSummaryDialog(_summaryStr);
@@ -353,6 +364,7 @@ USDExporterPlugin::ConvertFromSkp(const std::string& inputSU,
         exporter.SetExportMeshes(_exportMeshes);
         exporter.SetExportCameras(_exportCameras);
         exporter.SetExportARKitCompatibleUSDZ(_exportARKitCompatible);
+        exporter.SetExportDoubleSided(_exportDoubleSided);
         converted = exporter.Convert(inputSU, outputUSD, callback);
     } catch (...) {
         converted = false;
