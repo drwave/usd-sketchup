@@ -277,6 +277,10 @@ private:
 
     std::string _materialDefinitionsFileName;
     pxr::SdfPath _defaultMaterialPath;
+    bool _foundAFrontColor;
+    bool _foundABackColor;
+    bool _foundAFrontTexture;
+    bool _foundABackTexture;
     SUMaterialRef _groupMaterial;
     void _incrementCountForPath(pxr::SdfPath path);
     void _exportRGBAShader(const pxr::SdfPath path,
@@ -319,8 +323,7 @@ private:
                      pxr::VtArray<pxr::GfVec3f>& rgb, pxr::VtArray<float>& a,
                      pxr::VtArray<pxr::GfVec2f>& uv,
                      pxr::VtArray<pxr::GfVec3f>& extent,
-                     bool flipNormals,
-                     bool doubleSided);
+                     bool flipNormals, bool doubleSided, bool colorsSet);
     std::vector<MeshSubset> _coalesceGeomSubsets(std::vector<MeshSubset> subsets);
     void _coalesceAllGeomSubsets();
     bool _reallyExportDoubleSided(const pxr::SdfPath parentPath);

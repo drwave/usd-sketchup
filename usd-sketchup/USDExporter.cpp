@@ -207,7 +207,7 @@ USDExporter::_performExport(const std::string& skpSrc,
     _materialPathsCounts.clear();
     _useSharedFallbackMaterial = false;
     _groupMaterial = SU_INVALID;
-    
+
     _exportingUSDZ = false;
     SetSkpFileName(skpSrc);
     SU_CALL(SUModelCreateFromFile(&_model, _skpFileName.c_str()));
@@ -252,7 +252,10 @@ USDExporter::_performExport(const std::string& skpSrc,
         double startTimeTextures = _getCurrentTime_();
         _ExportTextures(path); // do this first so we know our _textureDirectory
         texturesTime = _getCurrentTime_() - startTimeTextures;
-        _ExportFallbackDisplayMaterial(path);
+        if (!GetExportARKitCompatibleUSDZ()) {
+            // currently, macOS and iOS don't support this shader, so don't bother
+            _ExportFallbackDisplayMaterial(path);
+        }
     }
     pxr::SdfPath parentPathS(parentPath);
     double startTimeComponents = _getCurrentTime_();
@@ -671,7 +674,10 @@ USDExporter::_ExportComponentDefinition(const pxr::SdfPath parentPath,
     _isBillboard = behavior.component_always_face_camera;
     
     // Before we do anything else, we should export our fallback material here
-    _ExportFallbackDisplayMaterial(path);
+    if (!GetExportARKitCompatibleUSDZ()) {
+        // currently, the fallback material doesn't work on macOS or iOS
+        _ExportFallbackDisplayMaterial(path);
+    }
     
     _ExportEntities(path, entities);
 
@@ -780,10 +786,6 @@ USDExporter::_ExportTextures(const pxr::SdfPath parentPath) {
 
 void
 USDExporter::_ExportFallbackDisplayMaterial(const pxr::SdfPath path) {
-    //std::cerr << "NOT exporting fallback material" << std::endl;
-    //_useSharedFallbackMaterial = false;
-    //return ;
-    _useSharedFallbackMaterial = true;
     std::string materialName = "FallbackDisplayMaterial";
     _fallbackDisplayMaterialPath = path.AppendChild(pxr::TfToken(materialName));
     // now we need to define it:
@@ -890,13 +892,6 @@ USDExporter::_ExportInstance(const pxr::SdfPath parentPath,
             return false;
         }
     }
-    SUMaterialRef thisComponentMaterial = SU_INVALID;
-    SUDrawingElementGetMaterial(de, &thisComponentMaterial);
-    if (SUIsValid(thisComponentMaterial)) {
-        //std::cerr << "found a material on the component instance" << std::endl;
-        _groupMaterial = thisComponentMaterial;
-    }
-
     // we want to keep track of how many instances for a given master/class
     // we've declared, so that we can name them with a running value.
     auto status = _instanceCountPerClass.emplace(cName, 0);
@@ -918,6 +913,15 @@ USDExporter::_ExportInstance(const pxr::SdfPath parentPath,
     //std::cerr << "appending instanceName " << instanceName << " to parentPath " << parentPath << std::endl;
     pxr::SdfPath path = parentPath.AppendChild(pxr::TfToken(instanceName));
     auto primSchema = pxr::UsdGeomXform::Define(_stage, path);
+
+    // this instance might have a material bound to it, so we need to
+    // find it and use it here
+    SUMaterialRef instanceMaterial = SU_INVALID;
+    SUDrawingElementGetMaterial(de, &instanceMaterial);
+    if (SUIsValid(instanceMaterial)) {
+        std::cerr << "found a material on the component instance" << std::endl;
+    }
+
     if (GetExportARKitCompatibleUSDZ()) {
         // ARKit 2 in iOS 12.0 can't handle instances
         primSchema.GetPrim().SetInstanceable(false);
@@ -1327,6 +1331,9 @@ USDExporter::_someMaterialsToExport() {
 
 bool
 USDExporter::_ExportMaterials(const pxr::SdfPath parentPath) {
+    if (!GetExportMaterials()) {
+        return false;
+    }
     if (_meshFrontFaceSubsets.empty() && _meshBackFaceSubsets.empty()) {
         // no need - no materials
         return false;
@@ -1334,7 +1341,7 @@ USDExporter::_ExportMaterials(const pxr::SdfPath parentPath) {
     // we might have a single mesh that has many materials, many of which are
     // the same. Since SketchUp has such a simple material schema (just a
     // texture map at most), we want to coalesce these as much as possible.
-    if (_exportMaterials && _someMaterialsToExport()) {
+    if (_someMaterialsToExport()) {
         pxr::SdfPath path = parentPath.AppendChild(pxr::TfToken("Materials"));
         auto primSchema = pxr::UsdGeomScope::Define(_stage, path);
         int displayIndex = 0;
@@ -1443,17 +1450,21 @@ USDExporter::_ExportFaces(const pxr::SdfPath parentPath,
         }
         exportedFaceCount += faceCount;
         if (GetExportMaterials()) {
-            pxr::GfVec3f rgb(_frontRGBA[0], _frontRGBA[1], _frontRGBA[2]);
-            float opacity = _frontRGBA[3];
-            MeshSubset frontSubset(_frontFaceTextureName, rgb, opacity,
-                                   currentFaceIndices);
-            _meshFrontFaceSubsets.push_back(frontSubset);
-
-            rgb = pxr::GfVec3f(_backRGBA[0], _backRGBA[1], _backRGBA[2]);
-            opacity = _backRGBA[3];
-            MeshSubset backSubset(_backFaceTextureName, rgb, opacity,
-                                  currentFaceIndices);
-            _meshBackFaceSubsets.push_back(backSubset);
+            // only make a mesh subset if we found a color or texture
+            if (_foundAFrontColor || _foundAFrontTexture) {
+                pxr::GfVec3f rgb(_frontRGBA[0], _frontRGBA[1], _frontRGBA[2]);
+                float opacity = _frontRGBA[3];
+                MeshSubset frontSubset(_frontFaceTextureName, rgb, opacity,
+                                       currentFaceIndices);
+                _meshFrontFaceSubsets.push_back(frontSubset);
+            }
+            if (_foundABackColor || _foundABackTexture) {
+                pxr::GfVec3f rgb = pxr::GfVec3f(_backRGBA[0], _backRGBA[1], _backRGBA[2]);
+                float opacity = _backRGBA[3];
+                MeshSubset backSubset(_backFaceTextureName, rgb, opacity,
+                                      currentFaceIndices);
+                _meshBackFaceSubsets.push_back(backSubset);
+            }
         }
     }
     if (exportedFaceCount) {
@@ -1544,10 +1555,12 @@ USDExporter::_addFrontFaceMaterial(SUFaceRef face) {
         _frontRGBA[1] = ((int)color.green)/255.0;
         _frontRGBA[2] = ((int)color.blue)/255.0;
         _frontRGBA[3] = ((int)color.alpha)/255.0;
+        _foundAFrontColor = true;
     }
     SUTextureRef textureRef = SU_INVALID;
     if (SU_ERROR_NONE == SUMaterialGetTexture(material, &textureRef)) {
         _frontFaceTextureName = _textureFileName(textureRef);
+        _foundAFrontTexture = true;
     } else {
         _frontFaceTextureName.clear();
     }
@@ -1574,10 +1587,12 @@ USDExporter::_addBackFaceMaterial(SUFaceRef face) {
         _backRGBA[1] = ((int)color.green)/255.0;
         _backRGBA[2] = ((int)color.blue)/255.0;
         _backRGBA[3] = ((int)color.alpha)/255.0;
+        _foundABackColor = true;
     }
     SUTextureRef textureRef = SU_INVALID;
     if (SU_ERROR_NONE == SUMaterialGetTexture(material, &textureRef)) {
         _backFaceTextureName = _textureFileName(textureRef);
+        _foundABackColor = true;
     } else {
         _backFaceTextureName.clear();
     }
@@ -1590,8 +1605,8 @@ USDExporter::_addFaceAsTexturedTriangles(const pxr::SdfPath parentPath, SUFaceRe
         return 0;
     }
     // let's cache our material info - if we have a non-default color & texture
-    _addFrontFaceMaterial(face);
-    _addBackFaceMaterial(face);
+    bool foundFrontFaceMaterial = _addFrontFaceMaterial(face);
+    bool foundBackFaceMaterial = _addBackFaceMaterial(face);
     // Create a triangulated mesh from face.
     SUMeshHelperRef mesh_ref = SU_INVALID;
     SU_CALL(SUMeshHelperCreateWithTextureWriter(&mesh_ref, face,
@@ -1603,18 +1618,16 @@ USDExporter::_addFaceAsTexturedTriangles(const pxr::SdfPath parentPath, SUFaceRe
         SU_CALL(SUMeshHelperRelease(&mesh_ref));
         return num_vertices;
     }
-    /*
-    if (!frontFaceMaterialExists) {
+    if (!foundFrontFaceMaterial) {
         std::cerr << "didn't find a front material at " << parentPath;
         std::cerr << " but we have a mesh with " << num_vertices;
         std::cerr << " vertices" << std::endl;
     }
-    if (!backFaceMaterialExists) {
+    if (!foundBackFaceMaterial) {
         std::cerr << "didn't find a back material at " << parentPath;
         std::cerr << " but we have a mesh with " << num_vertices;
         std::cerr << " vertices" << std::endl;
     }
-    */
     std::vector<SUPoint3D> vertices(num_vertices);
     SU_CALL(SUMeshHelperGetVertices(mesh_ref, num_vertices,
                                     &vertices[0], &num_vertices));
@@ -1662,7 +1675,6 @@ USDExporter::_addFaceAsTexturedTriangles(const pxr::SdfPath parentPath, SUFaceRe
     std::vector<size_t> indices(num_indices);
     SU_CALL(SUMeshHelperGetVertexIndices(mesh_ref, num_indices,
                                          &indices[0], &num_retrieved));
-    
     int indexOrigin = _currentVertexIndex;
     pxr::GfVec3f frontRGB(_frontRGBA[0], _frontRGBA[1], _frontRGBA[2]);
     float frontA = _frontRGBA[3];
@@ -1707,6 +1719,14 @@ USDExporter::_clearFacesExport() {
     _frontFaceTextureName.clear();
     _backUVs.clear();
     _frontUVs.clear();
+    for (int i = 0; i < 4; i++) {
+        _frontRGBA[i] = -1.0;
+        _backRGBA[i] = -1.0;
+    }
+    _foundAFrontColor = false;
+    _foundABackColor = false;
+    _foundAFrontTexture = false;
+    _foundABackTexture = false;
     _frontFaceRGBs.clear();
     _frontFaceAs.clear();
     _backFaceRGBs.clear();
@@ -1770,9 +1790,7 @@ USDExporter::_exportMesh(pxr::SdfPath path,
                          pxr::VtArray<float>& a,
                          pxr::VtArray<pxr::GfVec2f>& uv,
                          pxr::VtArray<pxr::GfVec3f>& extent,
-                         bool flipNormals,
-                         bool doubleSided = false
-                         ) {
+                         bool flipNormals, bool doubleSided, bool colorsSet) {
     _meshCount++;
     auto primSchema = pxr::UsdGeomMesh::Define(_stage, path);
     primSchema.CreateExtentAttr().Set(extent);
@@ -1797,17 +1815,20 @@ USDExporter::_exportMesh(pxr::SdfPath path,
     }
     primSchema.CreateFaceVertexCountsAttr().Set(_faceVertexCounts);
     primSchema.CreateFaceVertexIndicesAttr().Set(_flattenedFaceVertexIndices);
-    auto displayColorPrimvar = primSchema.CreateDisplayColorPrimvar();
-    displayColorPrimvar.Set(rgb);
-    displayColorPrimvar.SetInterpolation(pxr::UsdGeomTokens->uniform);
-    auto alphaPrimvar = primSchema.CreateDisplayOpacityPrimvar();
-    alphaPrimvar.Set(a);
-    alphaPrimvar.SetInterpolation(pxr::UsdGeomTokens->uniform);
+    // if the colors were never set, don't put them out
+    if (colorsSet) {
+        auto displayColorPrimvar = primSchema.CreateDisplayColorPrimvar();
+        displayColorPrimvar.Set(rgb);
+        displayColorPrimvar.SetInterpolation(pxr::UsdGeomTokens->uniform);
+        auto alphaPrimvar = primSchema.CreateDisplayOpacityPrimvar();
+        alphaPrimvar.Set(a);
+        alphaPrimvar.SetInterpolation(pxr::UsdGeomTokens->uniform);
+    }
     auto uvPrimvar = primSchema.CreatePrimvar(pxr::TfToken("st"),
                                               pxr::SdfValueTypeNames->Float2Array,
                                               pxr::UsdGeomTokens->vertex);
     uvPrimvar.Set(uv);
-    if (!_exportMaterials) {
+    if (!GetExportMaterials()) {
         // not exporting materials - we're done
         return ;
     }
@@ -1895,15 +1916,22 @@ USDExporter::_ExportMeshes(const pxr::SdfPath parentPath) {
     pxr::SdfPath materialsPath = parentPath.AppendChild(materials);
     
     _coalesceAllGeomSubsets();
-    
+    bool doubleSided = false;
+    bool flipNormals = false;
+    bool foundColors = _foundAFrontColor;
     pxr::SdfPath frontPath = parentPath.AppendChild(pxr::TfToken(frontSide));
     _exportMesh(frontPath, _meshFrontFaceSubsets,
                 pxr::UsdGeomTokens->rightHanded,
-                _frontFaceRGBs, _frontFaceAs, _frontUVs, extent, false, false);
+                _frontFaceRGBs, _frontFaceAs, _frontUVs, extent,
+                flipNormals, doubleSided, foundColors);
+
+    flipNormals = true;
+    foundColors = _foundABackColor;
     pxr::SdfPath backPath = parentPath.AppendChild(pxr::TfToken(backSide));
     _exportMesh(backPath, _meshBackFaceSubsets,
                 pxr::UsdGeomTokens->leftHanded,
-                _backFaceRGBs, _backFaceAs, _backUVs, extent, true, false);
+                _backFaceRGBs, _backFaceAs, _backUVs, extent,
+                flipNormals, doubleSided, foundColors);
     _clearFacesExport(); // free the info
 }
 
@@ -1923,10 +1951,14 @@ USDExporter::_ExportDoubleSidedMesh(const pxr::SdfPath parentPath) {
     
     _coalesceAllGeomSubsets();
     
+    bool doubleSided = true;
+    bool flipNormals = false;
+    bool foundColors = _foundAFrontColor;
     pxr::SdfPath path = parentPath.AppendChild(pxr::TfToken(bothSides));
     _exportMesh(path, _meshFrontFaceSubsets,
                 pxr::UsdGeomTokens->rightHanded,
-                _frontFaceRGBs, _frontFaceAs, _frontUVs, extent, false, true);
+                _frontFaceRGBs, _frontFaceAs, _frontUVs, extent,
+                flipNormals, doubleSided, foundColors);
     _clearFacesExport(); // free the info
 }
 
