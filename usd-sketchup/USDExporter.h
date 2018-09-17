@@ -312,6 +312,7 @@ private:
     bool _addFrontFaceMaterial(SUFaceRef face);
     bool _addBackFaceMaterial(SUFaceRef face);
     int _cacheDisplayMaterial(pxr::SdfPath path, MeshSubset& subset, int index);
+    std::string _generateRGBAMaterialName(pxr::GfVec3f rgb, float opacity);
     void _cacheRGBAMaterial(pxr::SdfPath path, MeshSubset& subset);
     int _cacheTextureMaterial(pxr::SdfPath path, MeshSubset& subset, int index);
     bool _bothDisplayColorAreEqual();

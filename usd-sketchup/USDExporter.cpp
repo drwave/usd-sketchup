@@ -913,13 +913,48 @@ USDExporter::_ExportInstance(const pxr::SdfPath parentPath,
     //std::cerr << "appending instanceName " << instanceName << " to parentPath " << parentPath << std::endl;
     pxr::SdfPath path = parentPath.AppendChild(pxr::TfToken(instanceName));
     auto primSchema = pxr::UsdGeomXform::Define(_stage, path);
+    auto instancePrim = primSchema.GetPrim();
 
     // this instance might have a material bound to it, so we need to
     // find it and use it here
     SUMaterialRef instanceMaterial = SU_INVALID;
     SUDrawingElementGetMaterial(de, &instanceMaterial);
     if (SUIsValid(instanceMaterial)) {
-        std::cerr << "found a material on the component instance" << std::endl;
+        // in theory, we could have a texture, a color, or neither
+        // in practice, I expect we'll have a texture or a color
+        // we might have a single mesh that has many materials, many of which are
+        // the same. Since SketchUp has such a simple material schema (just a
+        // texture map at most), we want to coalesce these as much as possible.
+        pxr::SdfPath materialsPath = path.AppendChild(pxr::TfToken("Materials"));
+        auto primSchema = pxr::UsdGeomScope::Define(_stage, materialsPath);
+        pxr::TfToken relName = pxr::UsdShadeTokens->materialBinding;
+
+        SUTextureRef textureRef = SU_INVALID;
+        if (SU_ERROR_NONE == SUMaterialGetTexture(instanceMaterial, &textureRef)) {
+            std::string textureName = _textureFileName(textureRef);
+            std::string texturePath = _textureDirectory + "/" + textureName;
+            pxr::TfToken materialName("TextureMaterial");
+            pxr::SdfPath materialPath = materialsPath.AppendChild(materialName);
+            _ExportTextureMaterial(materialPath, texturePath);
+            instancePrim.CreateRelationship(relName).AddTarget(materialPath);
+        } else {
+            SUColor color;
+            SU_RESULT result = SUMaterialGetColor(instanceMaterial, &color);
+            if (result == SU_ERROR_NONE) {
+                pxr::GfVec3f rgb;
+                rgb[0] = ((int)color.red)/255.0;
+                rgb[1] = ((int)color.green)/255.0;
+                rgb[2] = ((int)color.blue)/255.0;
+                float opacity = ((int)color.alpha)/255.0;
+                pxr::TfToken materialName(_generateRGBAMaterialName(rgb, opacity));
+                pxr::SdfPath materialPath = materialsPath.AppendChild(materialName);
+                _ExportRGBAMaterial(materialPath, rgb, opacity);
+                instancePrim.CreateRelationship(relName).AddTarget(materialPath);
+            } else {
+                std::cerr << "WARNING: material on instance" << path;
+                std::cerr << "has no texture or color!" << std::endl;
+            }
+        }
     }
 
     if (GetExportARKitCompatibleUSDZ()) {
@@ -1281,10 +1316,8 @@ USDExporter::_cacheDisplayMaterial(pxr::SdfPath path, MeshSubset& subset, int in
     return index;
 }
 
-void
-USDExporter::_cacheRGBAMaterial(pxr::SdfPath path, MeshSubset& subset) {
-    pxr::GfVec3f rgb = subset.GetRGB();
-    float opacity = subset.GetOpacity();
+std::string
+USDExporter::_generateRGBAMaterialName(pxr::GfVec3f rgb, float opacity) {
     char buffer[256]; // this is asking for trouble, but not sure a clearer way
     // single precision float has 7.2 decimals of precision, hence, 8...
     sprintf(buffer, "RGBAMaterial_%.8f_%.8f_%.8f_%.8f",
@@ -1292,14 +1325,20 @@ USDExporter::_cacheRGBAMaterial(pxr::SdfPath path, MeshSubset& subset) {
     // need to remove the . in the string...
     std::string str(buffer);
     str.erase(std::remove(str.begin(), str.end(), '.'), str.end());
+    return str;
+}
 
-    std::string materialName = str;
-    pxr::SdfPath materialPath = path.AppendChild(pxr::TfToken(materialName));
+void
+USDExporter::_cacheRGBAMaterial(pxr::SdfPath path, MeshSubset& subset) {
+    pxr::GfVec3f rgb = subset.GetRGB();
+    float opacity = subset.GetOpacity();
+    pxr::TfToken materialName(_generateRGBAMaterialName(rgb, opacity));
+    pxr::SdfPath materialPath = path.AppendChild(materialName);
     subset.SetMaterialPath(materialPath);
     // note: We may define the same material many times on a given mesh if
     // the same color is on different faces. Eventually we may want to note that
     // we've already done this for a given path, but for now, this is clearer...
-    _ExportRGBAMaterial(materialPath, subset.GetRGB(), subset.GetOpacity());
+    _ExportRGBAMaterial(materialPath, rgb, opacity);
     return ;
 }
 
@@ -1605,8 +1644,8 @@ USDExporter::_addFaceAsTexturedTriangles(const pxr::SdfPath parentPath, SUFaceRe
         return 0;
     }
     // let's cache our material info - if we have a non-default color & texture
-    bool foundFrontFaceMaterial = _addFrontFaceMaterial(face);
-    bool foundBackFaceMaterial = _addBackFaceMaterial(face);
+    /*bool foundFrontFaceMaterial = */ _addFrontFaceMaterial(face);
+    /*bool foundBackFaceMaterial = */ _addBackFaceMaterial(face);
     // Create a triangulated mesh from face.
     SUMeshHelperRef mesh_ref = SU_INVALID;
     SU_CALL(SUMeshHelperCreateWithTextureWriter(&mesh_ref, face,
@@ -1618,6 +1657,7 @@ USDExporter::_addFaceAsTexturedTriangles(const pxr::SdfPath parentPath, SUFaceRe
         SU_CALL(SUMeshHelperRelease(&mesh_ref));
         return num_vertices;
     }
+    /*
     if (!foundFrontFaceMaterial) {
         std::cerr << "didn't find a front material at " << parentPath;
         std::cerr << " but we have a mesh with " << num_vertices;
@@ -1628,6 +1668,7 @@ USDExporter::_addFaceAsTexturedTriangles(const pxr::SdfPath parentPath, SUFaceRe
         std::cerr << " but we have a mesh with " << num_vertices;
         std::cerr << " vertices" << std::endl;
     }
+    */
     std::vector<SUPoint3D> vertices(num_vertices);
     SU_CALL(SUMeshHelperGetVertices(mesh_ref, num_vertices,
                                     &vertices[0], &num_vertices));
