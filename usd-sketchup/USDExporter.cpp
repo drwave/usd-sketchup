@@ -662,13 +662,14 @@ USDExporter::_ExportComponentDefinition(const pxr::SdfPath parentPath,
     const pxr::TfToken child(cName);
     //std::cerr << "appending " << child << " to parentPath" << parentPath << std::endl;
     const pxr::SdfPath path = parentPath.AppendChild(child);
-    auto primSchema = pxr::UsdGeomXform::Define(_stage, path);
-    primSchema.GetPrim().SetMetadata(pxr::SdfFieldKeys->Kind,
-                                     pxr::KindTokens->component);
+    auto primSchema = _stage->CreateClassPrim(path);
+    auto prim = primSchema.GetPrim();
+    prim.SetMetadata(pxr::SdfFieldKeys->Kind,
+                     pxr::KindTokens->component);
     auto keyPath = pxr::TfToken("SketchUp:name");
     pxr::VtValue nameV(name);
-    primSchema.GetPrim().SetCustomDataByKey(keyPath, nameV);
-    
+    prim.SetCustomDataByKey(keyPath, nameV);
+
     SUComponentBehavior behavior;
     SU_CALL(SUComponentDefinitionGetBehavior(comp_def, &behavior));
     _isBillboard = behavior.component_always_face_camera;
@@ -680,19 +681,6 @@ USDExporter::_ExportComponentDefinition(const pxr::SdfPath parentPath,
     }
     
     _ExportEntities(path, entities);
-
-    if (GetExportToSingleFile()) {
-        // if we're exporting to a single file, we don't want these showing
-        // up on the stage, so we use "over" (or "class" would work too).
-        // we're using a pattern from:
-// https://graphics.pixar.com/usd/docs/api/class_usd_geom_point_instancer.html
-        // note that it is vital that we set the specifier *after* we
-        // have specified all our children, as we expect them to be using
-        // "def" with abandon.  Also note that if we use "class" instead of
-        // "over" we could have set it before calling the children, since both
-        // "def" and "class" would qualify as actually there.
-        primSchema.GetPrim().SetSpecifier(pxr::SdfSpecifierOver);
-    }
 }
 
 int
@@ -786,6 +774,8 @@ USDExporter::_ExportTextures(const pxr::SdfPath parentPath) {
 
 void
 USDExporter::_ExportFallbackDisplayMaterial(const pxr::SdfPath path) {
+    std::cerr << "NOT exporting fallback display material" << std::endl;
+    return ;
     std::string materialName = "FallbackDisplayMaterial";
     _fallbackDisplayMaterialPath = path.AppendChild(pxr::TfToken(materialName));
     // now we need to define it:
@@ -871,6 +861,7 @@ USDExporter::_ExportInstance(const pxr::SdfPath parentPath,
     // we'll want to go from this void* to our transformed name
     uintptr_t index = reinterpret_cast<uintptr_t>(definition.ptr);
     auto cName = _componentPtrSafeNameMap[index];
+    pxr::SdfPath componentMasterPath("/" + cName);
     // Convert this to a drawing entity and see if it is hidden.
     // if it is, we skip to the next one:
     SUDrawingElementRef de = SUComponentInstanceToDrawingElement(instance);
@@ -915,6 +906,7 @@ USDExporter::_ExportInstance(const pxr::SdfPath parentPath,
     auto primSchema = pxr::UsdGeomXform::Define(_stage, path);
     auto instancePrim = primSchema.GetPrim();
 
+
     // this instance might have a material bound to it, so we need to
     // find it and use it here
     SUMaterialRef instanceMaterial = SU_INVALID;
@@ -925,7 +917,7 @@ USDExporter::_ExportInstance(const pxr::SdfPath parentPath,
         // we might have a single mesh that has many materials, many of which are
         // the same. Since SketchUp has such a simple material schema (just a
         // texture map at most), we want to coalesce these as much as possible.
-        pxr::SdfPath materialsPath = path.AppendChild(pxr::TfToken("Materials"));
+        pxr::SdfPath materialsPath = componentMasterPath.AppendChild(pxr::TfToken("Materials"));
         auto primSchema = pxr::UsdGeomScope::Define(_stage, materialsPath);
         pxr::TfToken relName = pxr::UsdShadeTokens->materialBinding;
 
@@ -933,7 +925,8 @@ USDExporter::_ExportInstance(const pxr::SdfPath parentPath,
         if (SU_ERROR_NONE == SUMaterialGetTexture(instanceMaterial, &textureRef)) {
             std::string textureName = _textureFileName(textureRef);
             std::string texturePath = _textureDirectory + "/" + textureName;
-            pxr::TfToken materialName("TextureMaterial");
+            std::string safeName = "TextureMaterial_" + pxr::TfMakeValidIdentifier(texturePath);
+            pxr::TfToken materialName(safeName);
             pxr::SdfPath materialPath = materialsPath.AppendChild(materialName);
             _ExportTextureMaterial(materialPath, texturePath);
             instancePrim.CreateRelationship(relName).AddTarget(materialPath);
@@ -1564,7 +1557,16 @@ USDExporter::_textureFileName(SUTextureRef textureRef) {
             baseName = string.substr(i+1, string.size());
         }
     }
-    return baseName;
+    // TODO: this is a bad hack. Need to revisit it soon...
+    // we really should check for the existence of this file here, but I'm
+    // not currently sure how to do that in a arch independent way. What I do
+    // know is that sometimes SketchUp takes a "BMP" extension file and silently
+    // converts it to a "png" (i.e. on disk), so for now, we will at least make
+    // that change here:
+    std::regex replaceExpr(".BMP");
+    std::string newBaseName = std::regex_replace(baseName, replaceExpr, ".png");
+
+    return newBaseName;
 }
 
 // In SketchUp, a face can have:
