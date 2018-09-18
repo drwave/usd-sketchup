@@ -23,6 +23,7 @@
 		40E8C3122130833F00217059 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 40E8C3112130833F00217059 /* Cocoa.framework */; };
 		40E8C3142130835000217059 /* SketchUpAPI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 40E8C3132130835000217059 /* SketchUpAPI.framework */; };
 		40E8C322213091F900217059 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 40E8C321213091F900217059 /* README.md */; };
+		8714F5782151605E00BF7E0F /* lib in Resources */ = {isa = PBXBuildFile; fileRef = 8714F5772151605D00BF7E0F /* lib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -67,6 +68,7 @@
 		40E8C3132130835000217059 /* SketchUpAPI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SketchUpAPI.framework; path = "../../SketchUpSDKs/SDK_Mac_18-0-18665/SketchUpAPI.framework"; sourceTree = "<group>"; };
 		40E8C3192130899400217059 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		40E8C321213091F900217059 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		8714F5772151605D00BF7E0F /* lib */ = {isa = PBXFileReference; lastKnownFileType = folder; path = lib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -106,6 +108,7 @@
 				40E8C321213091F900217059 /* README.md */,
 				4052B652212F6EAC002B6746 /* usd-sketchup */,
 				4015BDF4213EE6190087C32C /* skp2usd */,
+				8714F5772151605D00BF7E0F /* lib */,
 				4052B651212F6EAC002B6746 /* Products */,
 				40E8C3102130833E00217059 /* Frameworks */,
 			);
@@ -239,6 +242,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8714F5782151605E00BF7E0F /* lib in Resources */,
 				40E8C322213091F900217059 /* README.md in Resources */,
 				4052B662212F6F81002B6746 /* USDSketchUpMacUI.xib in Resources */,
 			);
