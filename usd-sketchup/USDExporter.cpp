@@ -2010,7 +2010,7 @@ void
 USDExporter::_ExportEdges(const pxr::SdfPath parentPath,
                           SUEntitiesRef entities) {
     size_t num_edges = 0;
-    bool standAloneOnly = true; // Write only edges not connected to faces.
+    bool standAloneOnly = false; // Write only edges not connected to faces.
     SU_CALL(SUEntitiesGetNumEdges(entities, standAloneOnly, &num_edges));
     if (!num_edges) {
         return ;
