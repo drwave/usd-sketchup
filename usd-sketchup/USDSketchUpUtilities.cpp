@@ -275,7 +275,7 @@ USDExporterPlugin::GetExportCameras() {
 
 bool
 USDExporterPlugin::GetExportARKitCompatible() {
-    return _exportMeshes;
+    return _exportARKitCompatible;
 }
 
 bool
@@ -320,7 +320,7 @@ USDExporterPlugin::SetExportMaterials(bool flag) {
 
 void
 USDExporterPlugin::SetExportMeshes(bool flag) {
-    _exportMaterials = flag;
+    _exportMeshes = flag;
 }
 
 void
