@@ -19,7 +19,6 @@
 		4052B66A212F6F9D002B6746 /* USDTextureHelper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4052B667212F6F9D002B6746 /* USDTextureHelper.cpp */; };
 		4052B66B212F6F9D002B6746 /* USDSketchUpUtilities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4052B668212F6F9D002B6746 /* USDSketchUpUtilities.cpp */; };
 		40B15AF92138AC03008C1A12 /* libusd_ms.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 40B15AF82138AC03008C1A12 /* libusd_ms.dylib */; };
-		40B15AFA2138AE55008C1A12 /* libusd_ms.dylib in Copy USD libraries to plug-in bundle's Frameworks directory */ = {isa = PBXBuildFile; fileRef = 40B15AF82138AC03008C1A12 /* libusd_ms.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		40E8C3122130833F00217059 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 40E8C3112130833F00217059 /* Cocoa.framework */; };
 		40E8C3142130835000217059 /* SketchUpAPI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 40E8C3132130835000217059 /* SketchUpAPI.framework */; };
 		40E8C322213091F900217059 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 40E8C321213091F900217059 /* README.md */; };
@@ -43,7 +42,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				40B15AFA2138AE55008C1A12 /* libusd_ms.dylib in Copy USD libraries to plug-in bundle's Frameworks directory */,
 			);
 			name = "Copy USD libraries to plug-in bundle's Frameworks directory";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -298,7 +296,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "libDir=\"${PROJECT_DIR}/lib/USD/lib\"\nresources=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Resources\"\necho \"cp -rf ${libDir}/usd $resources\"\ncp -rf ${libDir}/usd $resources\n";
+			shellScript = "# USD Resources\nlibDir=\"${PROJECT_DIR}/lib/USD/lib\"\nresources=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Resources\"\necho \"cp -rf ${libDir}/usd $resources\"\ncp -rf ${libDir}/usd $resources\n\n# USD lib\nframeworks=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Frameworks\"\nif [ ! -d \"$frameworks\" ]\nthen\n    mkdir -p \"$frameworks\"\nfi\ncp -f ${libDir}/libusd_ms.dylib \"${frameworks}/\"\n";
 			showEnvVarsInLog = 0;
 		};
 		40E8C31F21308AAD00217059 /* Rewrite paths in plug-in to refer to SDK framework in app and USD libraries in the plug-in bundle */ = {
