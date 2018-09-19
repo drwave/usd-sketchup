@@ -259,11 +259,14 @@ private:
 
     std::string _componentDefinitionsFileName;
     std::set<std::string> _usedComponentNames;
+    pxr::UsdStageRefPtr _componentDefinitionStage;
+    std::set<pxr::SdfPath> _componentDefinitionPaths;
     void _ExportComponentDefinitions(const pxr::SdfPath parentPath);
     void _ExportComponentDefinition(const pxr::SdfPath parentPath,
                                     SUComponentDefinitionRef component);
     int _countComponentDefinitionsActuallyUsed();
     int _countEntities(SUEntitiesRef entities);
+    void _FinalizeComponentDefinitions();
 
     std::string _geomFileName;
 

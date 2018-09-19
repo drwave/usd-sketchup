@@ -62,6 +62,53 @@
 
 #include <sys/time.h>
 
+// TODO: this class should be in its own file
+#pragma mark MeshSubset class (should be in own file)
+MeshSubset::MeshSubset(std::string materialTextureName,
+                       pxr::GfVec3f rgb, float opacity,
+                       pxr::VtArray<int> faceIndices) :
+_materialTextureName(materialTextureName),
+_rgb(rgb), _opacity(opacity),
+_faceIndices(faceIndices) {
+}
+
+MeshSubset::~MeshSubset() {
+}
+
+const std::string
+MeshSubset::GetMaterialTextureName() {
+    return _materialTextureName;
+}
+
+const pxr::GfVec3f
+MeshSubset::GetRGB() {
+    return _rgb;
+}
+
+const float
+MeshSubset::GetOpacity() {
+    return _opacity;
+}
+
+
+const pxr::VtArray<int>
+MeshSubset::GetFaceIndices() {
+    return _faceIndices;
+}
+
+pxr::SdfPath
+MeshSubset::GetMaterialPath() {
+    return _materialPath;
+}
+
+void
+MeshSubset::SetMaterialPath(pxr::SdfPath path) {
+    _materialPath = pxr::SdfPath(path);
+}
+//
+
+#pragma mark Helper definitions:
+
 double _getCurrentTime_() {
     struct timeval v;
     double seconds;
@@ -88,6 +135,7 @@ static std::string frontSide = "FrontSide";
 static std::string backSide = "BackSide";
 static std::string bothSides = "BothSides";
 
+#pragma mark static constructor stuff for USD plugin discovery
 class InitUSDPluginPath {
 public:
     InitUSDPluginPath() {
@@ -97,50 +145,11 @@ public:
         pxr::PlugRegistry::GetInstance().RegisterPlugins(pluginDir);
     }
 };
-
 // constructor runs once to set USD plugin path
 static InitUSDPluginPath getUSDPlugInPathSet;
 
-MeshSubset::MeshSubset(std::string materialTextureName,
-                       pxr::GfVec3f rgb, float opacity,
-                       pxr::VtArray<int> faceIndices) :
-                        _materialTextureName(materialTextureName),
-                        _rgb(rgb), _opacity(opacity),
-                        _faceIndices(faceIndices) {
-}
 
-MeshSubset::~MeshSubset() {
-}
-    
-const std::string
-MeshSubset::GetMaterialTextureName() {
-    return _materialTextureName;
-}
-
-const pxr::GfVec3f
-MeshSubset::GetRGB() {
-    return _rgb;
-}
-
-const float
-MeshSubset::GetOpacity() {
-    return _opacity;
-}
-
-
-const pxr::VtArray<int> MeshSubset::GetFaceIndices() {
-    return _faceIndices;
-}
-
-pxr::SdfPath
-MeshSubset::GetMaterialPath() {
-    return _materialPath;
-}
-
-void
-MeshSubset::SetMaterialPath(pxr::SdfPath path) {
-    _materialPath = pxr::SdfPath(path);
-}
+#pragma mark USDExporter class:
 
 USDExporter::USDExporter(): _model(SU_INVALID), _textureWriter(SU_INVALID) {
     SUInitialize();
@@ -170,7 +179,7 @@ USDExporter::~USDExporter() {
     SUTerminate();
 }
 
-#pragma mark Public converter:
+#pragma mark Public converter method:
 
 bool
 USDExporter::Convert(const std::string& skpSrc, const std::string& usdDst,
@@ -179,7 +188,7 @@ USDExporter::Convert(const std::string& skpSrc, const std::string& usdDst,
     return _performExport(skpSrc, usdDst);
 }
 
-#pragma mark Do the real work:
+#pragma mark Do the real work here:
 bool
 USDExporter::_performExport(const std::string& skpSrc,
                             const std::string& usdDst) {
@@ -205,6 +214,7 @@ USDExporter::_performExport(const std::string& skpSrc,
     _filePathsForZip.clear();
     _exportTimeSummary.clear();
     _materialPathsCounts.clear();
+    _componentDefinitionPaths.clear();
     _useSharedFallbackMaterial = false;
     _groupMaterial = SU_INVALID;
 
@@ -277,6 +287,8 @@ USDExporter::_performExport(const std::string& skpSrc,
         _ExportCameras(path);
         camerasTime = _getCurrentTime_() - startTimeCameras;
     }
+    _FinalizeComponentDefinitions();
+    
     _stage->Save();
     
     if (_exportingUSDZ) {
@@ -332,252 +344,6 @@ USDExporter::_performExport(const std::string& skpSrc,
     return true;
 }
 
-#pragma mark Setters/Getters:
-
-const std::string
-USDExporter::GetSkpFileName() const {
-    return _skpFileName;
-}
-
-const std::string
-USDExporter::GetUSDFileName() const {
-    return _usdFileName;
-}
-
-bool
-USDExporter::GetExportNormals() const {
-    return _exportNormals;
-}
-
-bool
-USDExporter::GetExportEdges() const {
-    return _exportEdges;
-}
-
-bool
-USDExporter::GetExportLines() const {
-    return _exportLines;
-}
-
-bool
-USDExporter::GetExportCurves() const {
-    return _exportCurves;
-}
-
-bool
-USDExporter::GetExportToSingleFile() const {
-    return _exportToSingleFile;
-}
-
-bool
-USDExporter::GetExportARKitCompatibleUSDZ() const {
-    return _exportARKitCompatibleUSDZ;
-}
-
-bool
-USDExporter::GetExportMaterials()const {
-    return _exportMaterials;
-}
-
-bool
-USDExporter::GetExportMeshes()const {
-    return _exportMeshes;
-}
-
-bool
-USDExporter::GetExportCameras()const {
-    return _exportCameras;
-}
-
-bool
-USDExporter::GetExportDoubleSided()const {
-    return _exportDoubleSided;
-}
-
-void
-USDExporter::_updateFileNames() {
-    _baseFileName = _usdFileName;
-    std::string ext = pxr::TfStringGetSuffix(_usdFileName);
-    std::string path = pxr::TfGetPathName(_usdFileName);
-    std::string base = pxr::TfGetBaseName(_usdFileName);
-    std::string baseNoExt = pxr::TfStringGetBeforeSuffix(base);
-    _textureDirectory = std::string(path + baseNoExt + "_textures");
-    
-    _exportingUSDZ = false;
-    if (ext == "usdz") {
-        _exportingUSDZ = true;
-        _zipFileName = path + baseNoExt + ".usdz";
-        std::string tmpPath(pxr::ArchGetTmpDir());
-        _baseFileName = tmpPath + baseNoExt + ".usdc";
-        _textureDirectory = std::string(tmpPath + baseNoExt + "_textures");
-        if (GetExportARKitCompatibleUSDZ()) {
-            // note: if we're exporting USDZ, for now, to be ARKit compatible,
-            // they want a single binary USD file, so we will flip that switch
-            // Also, ARKit expects the one and only USD file in there to end w/c
-            _exportToSingleFile = true;
-        }
-        return ;
-    }
-    if (!_exportToSingleFile) {
-        // could be usda or crate
-        _geomFileName = path + baseNoExt + ".geom." + ext;
-        _componentDefinitionsFileName = path + baseNoExt + ".components." + ext;
-    }
-}
-
-void
-USDExporter::SetSkpFileName(const std::string name) {
-    _skpFileName = name;
-}
-
-void
-USDExporter::SetUSDFileName(const std::string name) {
-    _usdFileName = name;
-    _updateFileNames();
-}
-
-void
-USDExporter::SetExportNormals(bool flag) {
-    _exportNormals = flag;
-}
-
-void
-USDExporter::SetExportEdges(bool flag) {
-    _exportEdges = flag;
-}
-
-void
-USDExporter::SetExportLines(bool flag) {
-    _exportLines = flag;
-}
-
-void
-USDExporter::SetExportCurves(bool flag) {
-    _exportCurves = flag;
-}
-
-void
-USDExporter::SetExportToSingleFile(bool flag) {
-    _exportToSingleFile = flag;
-    _updateFileNames();
-}
-
-void
-USDExporter::SetExportARKitCompatibleUSDZ(bool flag) {
-    _exportARKitCompatibleUSDZ = flag;
-    _updateFileNames();
-}
-
-void
-USDExporter::SetExportMaterials(bool flag) {
-    _exportMaterials = flag;
-}
-
-void
-USDExporter::SetExportMeshes(bool flag) {
-    _exportMeshes = flag;
-}
-
-void
-USDExporter::SetExportCameras(bool flag) {
-    _exportCameras = flag;
-}
-
-void
-USDExporter::SetExportDoubleSided(bool flag) {
-    _exportDoubleSided = flag;
-}
-
-double
-USDExporter::GetSensorHeight() const {
-    return _sensorHeight;
-}
-
-double
-USDExporter::GetAspectRatio() const {
-    return _aspectRatio;
-}
-
-double
-USDExporter::GetStartFrame() const {
-    return _startFrame;
-}
-
-double
-USDExporter::GetFrameIncrement() const {
-    return _frameIncrement;
-}
-
-void
-USDExporter::SetAspectRatio(double ratio) {
-    _aspectRatio = ratio;
-}
-
-void
-USDExporter::SetSensorHeight(double height) {
-    _sensorHeight = height;
-}
-
-void
-USDExporter::SetStartFrame(double frame) {
-    _startFrame = frame;
-}
-
-void
-USDExporter::SetFrameIncrement(double frame) {
-    _frameIncrement = frame;
-}
-
-unsigned long long
-USDExporter::GetComponentDefinitionCount() {
-    return _componentDefinitionCount;
-}
-
-unsigned long long
-USDExporter::GetComponentInstanceCount() {
-    return _componentInstanceCount;
-}
-
-unsigned long long
-USDExporter::GetMeshCount() {
-    return _meshCount;
-}
-
-unsigned long long
-USDExporter::GetEdgesCount() {
-    return _edgesCount;
-}
-
-unsigned long long
-USDExporter::GetLinesCount() {
-    return _linesCount;
-}
-
-unsigned long long
-USDExporter::GetCurvesCount() {
-    return _curvesCount;
-}
-
-unsigned long long
-USDExporter::GetCamerasCount() {
-    return _camerasCount;
-}
-
-unsigned long long
-USDExporter::GetMaterialsCount() {
-    return _materialsCount;
-}
-
-unsigned long long
-USDExporter::GetGeomSubsetsCount() {
-    return _geomSubsetsCount;
-}
-
-std::string
-USDExporter::GetExportTimeSummary() {
-    return _exportTimeSummary;
-}
-
 #pragma mark Components:
 
 void
@@ -603,6 +369,18 @@ USDExporter::_ExportComponentDefinitions(const pxr::SdfPath parentPath) {
         _filePathsForZip.insert(fileNameOnly);
         UsdGeomSetStageUpAxis(_stage, pxr::UsdGeomTokens->z); // SketchUp is Z-up
     }
+    // let's hold on to this stage. We need to do this because when we go
+    // through the rest of the scene graph, we may run into instances of
+    // a component that has a material bound to it. We can't define that
+    // material with the instance (that's not how instancing works), so
+    // we'll need to reach back up to the scope of this component master
+    // definition to define it there, and then we will reference that from
+    // the instance. Because of that, we'll want to have a "finalize" stage
+    // after the whole scene graph is looked at. At that point, we'll make
+    // sure that all our components start with "over" (not "def"), since
+    // we want them to not be visible on the stage. Also, if we're writing
+    // out to multiple files, we'll want to save our layer stage there.
+    _componentDefinitionStage = _stage;
 
     auto primSchema = pxr::UsdGeomXform::Define(_stage, parentPath);
 
@@ -618,7 +396,6 @@ USDExporter::_ExportComponentDefinitions(const pxr::SdfPath parentPath) {
         _ExportComponentDefinition(parentPath, comp_defs[def]);
     }
     if (!GetExportToSingleFile()) {
-        _stage->Save();
         _stage = topLevelStage;
     }
 }
@@ -660,9 +437,20 @@ USDExporter::_ExportComponentDefinition(const pxr::SdfPath parentPath,
     SUComponentDefinitionGetEntities(comp_def, &entities);
     
     const pxr::TfToken child(cName);
-    //std::cerr << "appending " << child << " to parentPath" << parentPath << std::endl;
     const pxr::SdfPath path = parentPath.AppendChild(child);
-    auto primSchema = _stage->CreateClassPrim(path);
+    auto primSchema = pxr::UsdGeomXform::Define(_stage, path);
+    // note: we're using "Define" here, but we really want an "Over" so that
+    // these component "masters" don't get drawn in the scene - we just want
+    // them defined so we can reference them later when making instances.
+    // We will have a "finalize" pass where we go through at the end and make
+    // sure that the specifier is pxr::SdfSpecifierOver. We use this set to
+    // hold on to the paths of all the components we've defined. Note that
+    // we do NOT use "class" here, as that is reserved for when you have
+    // prims that use the "inheritsFrom" pattern, where we use "class" to
+    // override a (potentially large) set of prims that were defined in some
+    // arbitrary distance away in references. For example (explain the
+    // prop/set/shot scenario here).
+    _componentDefinitionPaths.insert(path);
     auto prim = primSchema.GetPrim();
     prim.SetMetadata(pxr::SdfFieldKeys->Kind,
                      pxr::KindTokens->component);
@@ -748,6 +536,24 @@ USDExporter::_countEntities(SUEntitiesRef entities) {
     }
     return instancedComponents;
 }
+
+void
+USDExporter::_FinalizeComponentDefinitions() {
+    for (pxr::SdfPath path : _componentDefinitionPaths) {
+        auto prim = _componentDefinitionStage->GetPrimAtPath(path);
+        // we're using a pattern from:
+        // https://graphics.pixar.com/usd/docs/api/class_usd_geom_point_instancer.html
+        // note that it is vital that we set the specifier *after* we
+        // have specified all our children, as we expect them to be using
+        // "def" with abandon. We do it here, after we have done all the
+        // modifications to the stage that have these component definitions.
+        prim.SetSpecifier(pxr::SdfSpecifierOver);
+    }
+    if (!GetExportToSingleFile()) {
+        _componentDefinitionStage->Save();
+    }
+}
+
 
 #pragma mark SceneGraph:
 
@@ -1563,9 +1369,8 @@ USDExporter::_textureFileName(SUTextureRef textureRef) {
     // know is that sometimes SketchUp takes a "BMP" extension file and silently
     // converts it to a "png" (i.e. on disk), so for now, we will at least make
     // that change here:
-    std::regex replaceExpr(".BMP");
+    std::regex replaceExpr(".BMP|.bmp|.TGA|.tga");
     std::string newBaseName = std::regex_replace(baseName, replaceExpr, ".png");
-
     return newBaseName;
 }
 
@@ -2334,4 +2139,250 @@ USDExporter::_ExportCamera(const pxr::SdfPath parentPath, SUSceneRef scene) {
         primSchema.CreateVerticalApertureAttr().Set(orthographicScale);
     }
     primSchema.MakeMatrixXform().Set(transform);
+}
+
+#pragma mark Setters/Getters:
+
+const std::string
+USDExporter::GetSkpFileName() const {
+    return _skpFileName;
+}
+
+const std::string
+USDExporter::GetUSDFileName() const {
+    return _usdFileName;
+}
+
+bool
+USDExporter::GetExportNormals() const {
+    return _exportNormals;
+}
+
+bool
+USDExporter::GetExportEdges() const {
+    return _exportEdges;
+}
+
+bool
+USDExporter::GetExportLines() const {
+    return _exportLines;
+}
+
+bool
+USDExporter::GetExportCurves() const {
+    return _exportCurves;
+}
+
+bool
+USDExporter::GetExportToSingleFile() const {
+    return _exportToSingleFile;
+}
+
+bool
+USDExporter::GetExportARKitCompatibleUSDZ() const {
+    return _exportARKitCompatibleUSDZ;
+}
+
+bool
+USDExporter::GetExportMaterials()const {
+    return _exportMaterials;
+}
+
+bool
+USDExporter::GetExportMeshes()const {
+    return _exportMeshes;
+}
+
+bool
+USDExporter::GetExportCameras()const {
+    return _exportCameras;
+}
+
+bool
+USDExporter::GetExportDoubleSided()const {
+    return _exportDoubleSided;
+}
+
+void
+USDExporter::SetSkpFileName(const std::string name) {
+    _skpFileName = name;
+}
+
+void
+USDExporter::SetUSDFileName(const std::string name) {
+    _usdFileName = name;
+    _updateFileNames();
+}
+
+void
+USDExporter::SetExportNormals(bool flag) {
+    _exportNormals = flag;
+}
+
+void
+USDExporter::SetExportEdges(bool flag) {
+    _exportEdges = flag;
+}
+
+void
+USDExporter::SetExportLines(bool flag) {
+    _exportLines = flag;
+}
+
+void
+USDExporter::SetExportCurves(bool flag) {
+    _exportCurves = flag;
+}
+
+void
+USDExporter::SetExportToSingleFile(bool flag) {
+    _exportToSingleFile = flag;
+    _updateFileNames();
+}
+
+void
+USDExporter::SetExportARKitCompatibleUSDZ(bool flag) {
+    _exportARKitCompatibleUSDZ = flag;
+    _updateFileNames();
+}
+
+void
+USDExporter::SetExportMaterials(bool flag) {
+    _exportMaterials = flag;
+}
+
+void
+USDExporter::SetExportMeshes(bool flag) {
+    _exportMeshes = flag;
+}
+
+void
+USDExporter::SetExportCameras(bool flag) {
+    _exportCameras = flag;
+}
+
+void
+USDExporter::SetExportDoubleSided(bool flag) {
+    _exportDoubleSided = flag;
+}
+
+double
+USDExporter::GetSensorHeight() const {
+    return _sensorHeight;
+}
+
+double
+USDExporter::GetAspectRatio() const {
+    return _aspectRatio;
+}
+
+double
+USDExporter::GetStartFrame() const {
+    return _startFrame;
+}
+
+double
+USDExporter::GetFrameIncrement() const {
+    return _frameIncrement;
+}
+
+void
+USDExporter::SetAspectRatio(double ratio) {
+    _aspectRatio = ratio;
+}
+
+void
+USDExporter::SetSensorHeight(double height) {
+    _sensorHeight = height;
+}
+
+void
+USDExporter::SetStartFrame(double frame) {
+    _startFrame = frame;
+}
+
+void
+USDExporter::SetFrameIncrement(double frame) {
+    _frameIncrement = frame;
+}
+
+unsigned long long
+USDExporter::GetComponentDefinitionCount() {
+    return _componentDefinitionCount;
+}
+
+unsigned long long
+USDExporter::GetComponentInstanceCount() {
+    return _componentInstanceCount;
+}
+
+unsigned long long
+USDExporter::GetMeshCount() {
+    return _meshCount;
+}
+
+unsigned long long
+USDExporter::GetEdgesCount() {
+    return _edgesCount;
+}
+
+unsigned long long
+USDExporter::GetLinesCount() {
+    return _linesCount;
+}
+
+unsigned long long
+USDExporter::GetCurvesCount() {
+    return _curvesCount;
+}
+
+unsigned long long
+USDExporter::GetCamerasCount() {
+    return _camerasCount;
+}
+
+unsigned long long
+USDExporter::GetMaterialsCount() {
+    return _materialsCount;
+}
+
+unsigned long long
+USDExporter::GetGeomSubsetsCount() {
+    return _geomSubsetsCount;
+}
+
+std::string
+USDExporter::GetExportTimeSummary() {
+    return _exportTimeSummary;
+}
+
+void
+USDExporter::_updateFileNames() {
+    _baseFileName = _usdFileName;
+    std::string ext = pxr::TfStringGetSuffix(_usdFileName);
+    std::string path = pxr::TfGetPathName(_usdFileName);
+    std::string base = pxr::TfGetBaseName(_usdFileName);
+    std::string baseNoExt = pxr::TfStringGetBeforeSuffix(base);
+    _textureDirectory = std::string(path + baseNoExt + "_textures");
+    
+    _exportingUSDZ = false;
+    if (ext == "usdz") {
+        _exportingUSDZ = true;
+        _zipFileName = path + baseNoExt + ".usdz";
+        std::string tmpPath(pxr::ArchGetTmpDir());
+        _baseFileName = tmpPath + baseNoExt + ".usdc";
+        _textureDirectory = std::string(tmpPath + baseNoExt + "_textures");
+        if (GetExportARKitCompatibleUSDZ()) {
+            // note: if we're exporting USDZ, for now, to be ARKit compatible,
+            // they want a single binary USD file, so we will flip that switch
+            // Also, ARKit expects the one and only USD file in there to end w/c
+            _exportToSingleFile = true;
+        }
+        return ;
+    }
+    if (!_exportToSingleFile) {
+        // could be usda or crate
+        _geomFileName = path + baseNoExt + ".geom." + ext;
+        _componentDefinitionsFileName = path + baseNoExt + ".components." + ext;
+    }
 }
