@@ -290,7 +290,8 @@ private:
     void _exportTextureShader(const pxr::SdfPath path,
                               std::string texturePath,
                               pxr::UsdShadeOutput result,
-                              pxr::UsdShadeInput diffuseColor);
+                              pxr::UsdShadeInput diffuseColor,
+                              pxr::UsdShadeInput alpha);
     void _ExportTextureMaterial(const pxr::SdfPath parentPath,
                                 std::string texturePath);
     void _ExportRGBAMaterial(const pxr::SdfPath path,

@@ -1008,14 +1008,18 @@ void
 USDExporter::_exportTextureShader(const pxr::SdfPath path,
                                   std::string texturePath,
                                   pxr::UsdShadeOutput primvar,
-                                  pxr::UsdShadeInput diffuseColor) {
+                                  pxr::UsdShadeInput diffuseColor,
+                                  pxr::UsdShadeInput alpha) {
     pxr::SdfPath  shaderPath = path.AppendChild(pxr::TfToken("Texture"));
     _incrementCountForShaderPath(shaderPath);
     auto schema = pxr::UsdShadeShader::Define(_stage,  shaderPath);
     schema.CreateIdAttr().Set(pxr::TfToken("UsdUVTexture"));
     auto rgb = schema.CreateOutput(pxr::TfToken("rgb"),
-                                     pxr::SdfValueTypeNames->Float3);
+                                   pxr::SdfValueTypeNames->Float3);
     diffuseColor.ConnectToSource(rgb);
+    auto a = schema.CreateOutput(pxr::TfToken("a"),
+                                 pxr::SdfValueTypeNames->Float);
+    alpha.ConnectToSource(a);
     
     _filePathsForZip.insert(texturePath);
     pxr::SdfAssetPath relativePath(texturePath);
@@ -1057,9 +1061,8 @@ USDExporter::_ExportTextureMaterial(const pxr::SdfPath path,
     auto diffuseColor_opacity = _exportPreviewShader(path, materialSurface);
     auto diffuseColor = diffuseColor_opacity.first;
     auto opacity = diffuseColor_opacity.second;
-    opacity.Set(1.0f); // for a textured material, it's fully opaque
     auto primvar = _exportSTPrimvarShader(path);
-    _exportTextureShader(path, texturePath, primvar, diffuseColor);
+    _exportTextureShader(path, texturePath, primvar, diffuseColor, opacity);
 }
 
 void
