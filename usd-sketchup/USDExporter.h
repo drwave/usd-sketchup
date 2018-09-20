@@ -111,6 +111,7 @@ public:
     unsigned long long GetEdgesCount();
     unsigned long long GetCamerasCount();
     unsigned long long GetMaterialsCount();
+    unsigned long long GetShadersCount();
     unsigned long long GetGeomSubsetsCount();
     unsigned long long GetOriginalFacesCount();
     unsigned long long GetTrianglesCount();
@@ -187,6 +188,8 @@ private:
     // color and opacity are all pan-mesh, so we don't need to track them.
     // This is only for material assignment
     std::map<pxr::SdfPath, int> _materialPathsCounts;
+    // same for shaders - see above
+    std::map<pxr::SdfPath, int> _shaderPathsCounts;
 
     std::vector<MeshSubset> _meshFrontFaceSubsets;
     std::vector<MeshSubset> _meshBackFaceSubsets;
@@ -273,6 +276,7 @@ private:
     bool _foundABackTexture;
     SUMaterialRef _groupMaterial;
     void _incrementCountForMaterialPath(pxr::SdfPath path);
+    void _incrementCountForShaderPath(pxr::SdfPath path);
     void _exportRGBAShader(const pxr::SdfPath path,
                            pxr::UsdShadeOutput materialSurface,
                            pxr::GfVec3f rgb, float opacity);

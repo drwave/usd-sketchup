@@ -221,6 +221,7 @@ Gw
                         <rect key="frame" x="20" y="254" width="50" height="22"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="right" title="1" drawsBackground="YES" id="nIF-8x-nmq">
+                            <numberFormatter key="formatter" formatterBehavior="custom10_4" numberStyle="decimal" roundingMode="floor" minimumIntegerDigits="1" maximumIntegerDigits="2000000000" maximumFractionDigits="2" id="TxF-r9-nB8"/>
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>

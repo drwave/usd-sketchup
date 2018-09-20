@@ -180,7 +180,7 @@ USDExporterPlugin::USDExporterPlugin(): _exportMeshes(true),
                                         _exportARKitCompatible(true),
                                         _exportDoubleSided(true),
                                         _exportNormals(false),
-                                        _aspectRatio(16.0/9.0),
+                                        _aspectRatio(1.85),
                                         _exportEdges(false),
                                         _exportLines(false),
                                         _exportCurves(false),
@@ -439,6 +439,13 @@ USDExporterPlugin::_updateSummaryFromExporter(USDExporter& exporter) {
         } else {
             ss << " Materials\n";
         }
+        unsigned long long shaders = exporter.GetShadersCount();
+        ss << std::string("\t") << shaders;
+        if (shaders == 1) {
+            ss << " Shader" << std::endl;
+        } else {
+            ss << " Shaders" << std::endl;
+        }
     }
     count = exporter.GetGeomSubsetsCount();
     if (count) {
@@ -478,15 +485,15 @@ USDExporterPlugin::_updateSummaryFromExporter(USDExporter& exporter) {
     }
     count = exporter.GetCamerasCount();
     if (count) {
+        char aspectRatio[256];
+        sprintf(aspectRatio, "%3.2f:1\n", _aspectRatio);
         ss << std::string("Exported ") << count;
         if (count == 1) {
-            ss << " Camera\n";
+            ss << " Camera";
         } else {
-            ss << " Cameras\n";
+            ss << " Cameras";
         }
-        ss << "  (w/aspect ratio of ";
-        ss << std::to_string(_aspectRatio);
-        ss << ")\n";
+        ss <<  " w/aspect ratio " << std::string(aspectRatio);
     }
     // finally, get the string w/the export time info:
     ss << exporter.GetExportTimeSummary();

@@ -294,7 +294,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# USD Resources\nlibDir=\"${PROJECT_DIR}/lib/USD/lib\"\nresources=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Resources\"\necho \"cp -rf ${libDir}/usd $resources\"\ncp -rf ${libDir}/usd $resources\n\n# USD lib\nframeworks=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Frameworks\"\nif [ ! -d \"$frameworks\" ]\nthen\n    mkdir -p \"$frameworks\"\nfi\ncp -f ${libDir}/libusd_ms.dylib \"${frameworks}/\"\n\necho \"\\nCodesigning. If this application doesn't have a certificate, ignore the following error.\"\n/usr/bin/codesign -f --deep -s \"Mac Developer\" \"${frameworks}/libusd_ms.dylib\"\n\n\n";
+			shellScript = "# USD Resources\nlibDir=\"${PROJECT_DIR}/lib/USD/lib\"\nresources=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Resources\"\necho \"cp -rf ${libDir}/usd $resources\"\ncp -rf ${libDir}/usd $resources\n\n# USD lib\nframeworks=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Frameworks\"\nif [ ! -d \"$frameworks\" ]\nthen\n    mkdir -p \"$frameworks\"\nfi\ncp -f ${libDir}/libusd_ms.dylib \"${frameworks}/\"\n\necho \"\\nCodesigning. If this application doesn't have a certificate, ignore the following error.\"\n/usr/bin/codesign -f --deep -s \"Mac Developer\" \"${frameworks}/libusd_ms.dylib\"\n";
 			showEnvVarsInLog = 0;
 		};
 		40E8C31F21308AAD00217059 /* Rewrite paths in plug-in to refer to SDK framework in app and USD libraries in the plug-in bundle */ = {

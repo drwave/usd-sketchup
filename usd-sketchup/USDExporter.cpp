@@ -119,10 +119,10 @@ USDExporter::USDExporter(): _model(SU_INVALID), _textureWriter(SU_INVALID) {
     SetExportToSingleFile(false);
     SetExportARKitCompatibleUSDZ(true);
     SetExportDoubleSided(true);
-    SetAspectRatio(16.0/9.0);
+    SetAspectRatio(1.85);
     SetSensorHeight(24.0);
     SetStartFrame(101.0);
-    SetFrameIncrement(48.0);
+    SetFrameIncrement(24.0);
     _progressCallback = NULL;
 }
 
@@ -164,12 +164,14 @@ USDExporter::_performExport(const std::string& skpSrc,
     _linesCount = 0;
     _curvesCount = 0;
     _camerasCount = 0;
+    _shadersCount = 0;
     _materialsCount = 0;
     _geomSubsetsCount = 0;
     _originalFacesCount = 0;
     _trianglesCount = 0;
     _filePathsForZip.clear();
     _exportTimeSummary.clear();
+    _shaderPathsCounts.clear();
     _materialPathsCounts.clear();
     _componentDefinitionPaths.clear();
     _useSharedFallbackMaterial = true;
@@ -862,10 +864,26 @@ USDExporter::_ExportGroup(const pxr::SdfPath parentPath, SUGroupRef group,
 #pragma mark Shaders:
 
 void
+USDExporter::_incrementCountForShaderPath(pxr::SdfPath path) {
+    if (_shaderPathsCounts.find(path) == _shaderPathsCounts.end()) {
+        _shaderPathsCounts[path] = 0;
+        if (_currentDataPoint) {
+            auto count = _currentDataPoint->GetShadersCount();
+            count++;
+            _currentDataPoint->SetShadersCount(count);
+        } else {
+            _shadersCount++;
+        }
+    }
+    _shaderPathsCounts[path] = 1 + _shaderPathsCounts[path];
+}
+                               
+void
 USDExporter::_exportRGBAShader(const pxr::SdfPath path,
                                pxr::UsdShadeOutput materialSurface,
                                pxr::GfVec3f rgb, float opacity) {
     pxr::SdfPath shaderPath = path.AppendChild(pxr::TfToken("RGBA"));
+    _incrementCountForShaderPath(shaderPath);
     auto schema = pxr::UsdShadeShader::Define(_stage, shaderPath);
     schema.CreateIdAttr().Set(pxr::TfToken("UsdPreviewSurface"));
     auto surfaceOutput = schema.CreateOutput(pxr::TfToken("surface"),
@@ -909,6 +927,7 @@ std::pair<pxr::UsdShadeInput, pxr::UsdShadeInput>
 USDExporter::_exportPreviewShader(const pxr::SdfPath path,
                                   pxr::UsdShadeOutput materialSurface) {
     pxr::SdfPath shaderPath = path.AppendChild(pxr::TfToken("PbrPreview"));
+    _incrementCountForShaderPath(shaderPath);
     auto schema = pxr::UsdShadeShader::Define(_stage, shaderPath);
     schema.CreateIdAttr().Set(pxr::TfToken("UsdPreviewSurface"));
     auto surfaceOutput = schema.CreateOutput(pxr::TfToken("surface"),
@@ -952,6 +971,7 @@ USDExporter::_exportPreviewShader(const pxr::SdfPath path,
 pxr::UsdShadeOutput
 USDExporter::_exportSTPrimvarShader(const pxr::SdfPath path) {
     pxr::SdfPath shaderPath = path.AppendChild(pxr::TfToken("PrimvarST"));
+    _incrementCountForShaderPath(shaderPath);
     auto schema = pxr::UsdShadeShader::Define(_stage, shaderPath);
     schema.CreateIdAttr().Set(pxr::TfToken("UsdPrimvarReader_float2"));
     schema.CreateInput(pxr::TfToken("varname"),
@@ -963,6 +983,7 @@ USDExporter::_exportSTPrimvarShader(const pxr::SdfPath path) {
 pxr::UsdShadeOutput
 USDExporter::_exportDisplayColorPrimvarShader(const pxr::SdfPath path) {
     pxr::SdfPath shaderPath = path.AppendChild(pxr::TfToken("PrimvarDisplayColor"));
+    _incrementCountForShaderPath(shaderPath);
     auto schema = pxr::UsdShadeShader::Define(_stage, shaderPath);
     schema.CreateIdAttr().Set(pxr::TfToken("UsdPrimvarReader_float3"));
     schema.CreateInput(pxr::TfToken("varname"),
@@ -974,6 +995,7 @@ USDExporter::_exportDisplayColorPrimvarShader(const pxr::SdfPath path) {
 pxr::UsdShadeOutput
 USDExporter::_exportDisplayOpacityPrimvarShader(const pxr::SdfPath path) {
     pxr::SdfPath shaderPath = path.AppendChild(pxr::TfToken("PrimvarDisplayOpacity"));
+    _incrementCountForShaderPath(shaderPath);
     auto schema = pxr::UsdShadeShader::Define(_stage, shaderPath);
     schema.CreateIdAttr().Set(pxr::TfToken("UsdPrimvarReader_float"));
     schema.CreateInput(pxr::TfToken("varname"),
@@ -987,25 +1009,28 @@ USDExporter::_exportTextureShader(const pxr::SdfPath path,
                                   std::string texturePath,
                                   pxr::UsdShadeOutput primvar,
                                   pxr::UsdShadeInput diffuseColor) {
-    pxr::SdfPath s3Path = path.AppendChild(pxr::TfToken("Texture"));
-    auto s3Schema = pxr::UsdShadeShader::Define(_stage, s3Path);
-    s3Schema.CreateIdAttr().Set(pxr::TfToken("UsdUVTexture"));
-    auto rgb = s3Schema.CreateOutput(pxr::TfToken("rgb"),
+    pxr::SdfPath  shaderPath = path.AppendChild(pxr::TfToken("Texture"));
+    _incrementCountForShaderPath(shaderPath);
+    auto schema = pxr::UsdShadeShader::Define(_stage,  shaderPath);
+    schema.CreateIdAttr().Set(pxr::TfToken("UsdUVTexture"));
+    auto rgb = schema.CreateOutput(pxr::TfToken("rgb"),
                                      pxr::SdfValueTypeNames->Float3);
     diffuseColor.ConnectToSource(rgb);
     
     _filePathsForZip.insert(texturePath);
     pxr::SdfAssetPath relativePath(texturePath);
-    s3Schema.CreateInput(pxr::TfToken("file"),
+    schema.CreateInput(pxr::TfToken("file"),
                          pxr::SdfValueTypeNames->Asset).Set(relativePath);
-    s3Schema.CreateInput(pxr::TfToken("wrapS"),
+    schema.CreateInput(pxr::TfToken("wrapS"),
                          pxr::SdfValueTypeNames->Token).Set(pxr::TfToken("repeat"));
-    s3Schema.CreateInput(pxr::TfToken("wrapT"),
+    schema.CreateInput(pxr::TfToken("wrapT"),
                          pxr::SdfValueTypeNames->Token).Set(pxr::TfToken("repeat"));
-    auto st = s3Schema.CreateInput(pxr::TfToken("st"),
+    auto st = schema.CreateInput(pxr::TfToken("st"),
                                    pxr::SdfValueTypeNames->Float2);
     st.ConnectToSource(primvar);
 }
+
+#pragma mark Materials:
 
 void
 USDExporter:: _incrementCountForMaterialPath(pxr::SdfPath path) {
@@ -1021,8 +1046,6 @@ USDExporter:: _incrementCountForMaterialPath(pxr::SdfPath path) {
     }
     _materialPathsCounts[path] = 1 + _materialPathsCounts[path];
 }
-
-#pragma mark Materials:
 
 void
 USDExporter::_ExportTextureMaterial(const pxr::SdfPath path,
@@ -2377,6 +2400,11 @@ USDExporter::GetCamerasCount() {
 unsigned long long
 USDExporter::GetMaterialsCount() {
     return _materialsCount;
+}
+
+unsigned long long
+USDExporter::GetShadersCount() {
+    return _shadersCount;
 }
 
 unsigned long long
