@@ -62,51 +62,6 @@
 
 #include <sys/time.h>
 
-// TODO: this class should be in its own file
-#pragma mark MeshSubset class (should be in own file)
-MeshSubset::MeshSubset(std::string materialTextureName,
-                       pxr::GfVec3f rgb, float opacity,
-                       pxr::VtArray<int> faceIndices) :
-_materialTextureName(materialTextureName),
-_rgb(rgb), _opacity(opacity),
-_faceIndices(faceIndices) {
-}
-
-MeshSubset::~MeshSubset() {
-}
-
-const std::string
-MeshSubset::GetMaterialTextureName() {
-    return _materialTextureName;
-}
-
-const pxr::GfVec3f
-MeshSubset::GetRGB() {
-    return _rgb;
-}
-
-const float
-MeshSubset::GetOpacity() {
-    return _opacity;
-}
-
-
-const pxr::VtArray<int>
-MeshSubset::GetFaceIndices() {
-    return _faceIndices;
-}
-
-pxr::SdfPath
-MeshSubset::GetMaterialPath() {
-    return _materialPath;
-}
-
-void
-MeshSubset::SetMaterialPath(pxr::SdfPath path) {
-    _materialPath = pxr::SdfPath(path);
-}
-//
-
 #pragma mark Helper definitions:
 
 double _getCurrentTime_() {
@@ -204,18 +159,20 @@ USDExporter::_performExport(const std::string& skpSrc,
     // used by the summary text presented to the user at the end of the export.
     _componentDefinitionCount = 0;
     _componentInstanceCount = 0;
-    _meshCount = 0;
+     _meshesCount = 0;
     _edgesCount = 0;
     _linesCount = 0;
     _curvesCount = 0;
     _camerasCount = 0;
     _materialsCount = 0;
     _geomSubsetsCount = 0;
+    _originalFacesCount = 0;
+    _trianglesCount = 0;
     _filePathsForZip.clear();
     _exportTimeSummary.clear();
     _materialPathsCounts.clear();
     _componentDefinitionPaths.clear();
-    _useSharedFallbackMaterial = false;
+    _useSharedFallbackMaterial = true;
     _groupMaterial = SU_INVALID;
 
     _exportingUSDZ = false;
@@ -395,6 +352,7 @@ USDExporter::_ExportComponentDefinitions(const pxr::SdfPath parentPath) {
     for (size_t def = 0; def < num_comp_defs; ++def) {
         _ExportComponentDefinition(parentPath, comp_defs[def]);
     }
+    _currentDataPoint = NULL;
     if (!GetExportToSingleFile()) {
         _stage = topLevelStage;
     }
@@ -438,6 +396,12 @@ USDExporter::_ExportComponentDefinition(const pxr::SdfPath parentPath,
     
     const pxr::TfToken child(cName);
     const pxr::SdfPath path = parentPath.AppendChild(child);
+    // we want to track stats for this particular component so that every time
+    // we instance one, we can increment our export info appropriately.
+    StatsDataPoint* newDataPoint = new StatsDataPoint();
+    _componentMasterStats[path] = newDataPoint;
+    _currentDataPoint = newDataPoint;
+    
     auto primSchema = pxr::UsdGeomXform::Define(_stage, path);
     // note: we're using "Define" here, but we really want an "Over" so that
     // these component "masters" don't get drawn in the scene - we just want
@@ -580,8 +544,6 @@ USDExporter::_ExportTextures(const pxr::SdfPath parentPath) {
 
 void
 USDExporter::_ExportFallbackDisplayMaterial(const pxr::SdfPath path) {
-    std::cerr << "NOT exporting fallback display material" << std::endl;
-    return ;
     std::string materialName = "FallbackDisplayMaterial";
     _fallbackDisplayMaterialPath = path.AppendChild(pxr::TfToken(materialName));
     // now we need to define it:
@@ -712,7 +674,6 @@ USDExporter::_ExportInstance(const pxr::SdfPath parentPath,
     auto primSchema = pxr::UsdGeomXform::Define(_stage, path);
     auto instancePrim = primSchema.GetPrim();
 
-
     // this instance might have a material bound to it, so we need to
     // find it and use it here
     SUMaterialRef instanceMaterial = SU_INVALID;
@@ -782,6 +743,32 @@ USDExporter::_ExportInstance(const pxr::SdfPath parentPath,
     SU_CALL(SUComponentInstanceGetTransform(instance, &t));
     pxr::GfMatrix4d usdMatrix = usdTransformFromSUTransform(t);
     primSchema.MakeMatrixXform().Set(usdMatrix, pxr::UsdTimeCode::Default());
+    // finally, let's increment our various counters based on what's in
+    // this instance.
+    if (_componentMasterStats.find(componentMasterPath) != _componentMasterStats.end()) {
+        StatsDataPoint* masterDataPoint = _componentMasterStats[componentMasterPath];
+        if (masterDataPoint) {
+            _originalFacesCount += masterDataPoint->GetOriginalFacesCount();
+            _trianglesCount += masterDataPoint->GetTrianglesCount();
+             _meshesCount +=  masterDataPoint->GetMeshesCount();
+            _edgesCount += masterDataPoint->GetEdgesCount();
+            _curvesCount += masterDataPoint->GetCurvesCount();
+            _linesCount += masterDataPoint->GetLinesCount();
+            _materialsCount += masterDataPoint->GetMaterialsCount();
+            _shadersCount += masterDataPoint->GetShadersCount();
+        } else {
+            std::cerr << "ERROR: unable to find stats for component master ";
+            std::cerr << componentMasterPath << std::endl;
+        }
+    }  else {
+        std::cerr << "ERROR: unable to find stats for component master ";
+        std::cerr << componentMasterPath << std::endl;
+    }
+    // We also need to count an extra material if we made one
+    if (SUIsValid(instanceMaterial)) {
+        
+    }
+
     return true;
 }
 
@@ -1021,10 +1008,16 @@ USDExporter::_exportTextureShader(const pxr::SdfPath path,
 }
 
 void
-USDExporter::_incrementCountForPath(pxr::SdfPath path) {
+USDExporter:: _incrementCountForMaterialPath(pxr::SdfPath path) {
     if (_materialPathsCounts.find(path) == _materialPathsCounts.end()) {
         _materialPathsCounts[path] = 0;
-        _materialsCount++;
+        if (_currentDataPoint) {
+            auto count = _currentDataPoint->GetMaterialsCount();
+            count++;
+            _currentDataPoint->SetMaterialsCount(count);
+        } else {
+            _materialsCount++;
+        }
     }
     _materialPathsCounts[path] = 1 + _materialPathsCounts[path];
 }
@@ -1034,7 +1027,7 @@ USDExporter::_incrementCountForPath(pxr::SdfPath path) {
 void
 USDExporter::_ExportTextureMaterial(const pxr::SdfPath path,
                                     std::string texturePath) {
-    _incrementCountForPath(path);
+    _incrementCountForMaterialPath(path);
     auto mSchema = pxr::UsdShadeMaterial::Define(_stage, path);
     auto materialSurface = mSchema.CreateOutput(pxr::TfToken("surface"),
                                                 pxr::SdfValueTypeNames->Token);
@@ -1049,7 +1042,7 @@ USDExporter::_ExportTextureMaterial(const pxr::SdfPath path,
 void
 USDExporter::_ExportRGBAMaterial(const pxr::SdfPath path,
                                  pxr::GfVec3f rgb, float opacity) {
-    _incrementCountForPath(path);
+    _incrementCountForMaterialPath(path);
     auto mSchema = pxr::UsdShadeMaterial::Define(_stage, path);
     auto materialSurface = mSchema.CreateOutput(pxr::TfToken("surface"),
                                                 pxr::SdfValueTypeNames->Token);
@@ -1058,7 +1051,7 @@ USDExporter::_ExportRGBAMaterial(const pxr::SdfPath path,
 
 void
 USDExporter::_ExportDisplayMaterial(const pxr::SdfPath path) {
-    _incrementCountForPath(path);
+    _incrementCountForMaterialPath(path);
     auto mSchema = pxr::UsdShadeMaterial::Define(_stage, path);
     auto materialSurface = mSchema.CreateOutput(pxr::TfToken("surface"),
                                                 pxr::SdfValueTypeNames->Token);
@@ -1517,7 +1510,16 @@ USDExporter::_addFaceAsTexturedTriangles(const pxr::SdfPath parentPath, SUFaceRe
     }
     size_t num_triangles = 0;
     SU_CALL(SUMeshHelperGetNumTriangles(mesh_ref, &num_triangles));
-    
+    // for tracking purposes:
+    if (_currentDataPoint) {
+        auto count = _currentDataPoint->GetOriginalFacesCount();
+        _currentDataPoint->SetOriginalFacesCount(1 + count);
+        count = _currentDataPoint->GetTrianglesCount();
+        _currentDataPoint->SetTrianglesCount(1 + count);
+    } else {
+        _originalFacesCount++;
+        _trianglesCount += num_triangles;
+    }
     const size_t num_indices = 3 * num_triangles;
     size_t num_retrieved = 0;
     std::vector<size_t> indices(num_indices);
@@ -1639,7 +1641,14 @@ USDExporter::_exportMesh(pxr::SdfPath path,
                          pxr::VtArray<pxr::GfVec2f>& uv,
                          pxr::VtArray<pxr::GfVec3f>& extent,
                          bool flipNormals, bool doubleSided, bool colorsSet) {
-    _meshCount++;
+
+    if (_currentDataPoint) {
+        auto count = _currentDataPoint->GetMeshesCount();
+        count++;
+        _currentDataPoint->SetMeshesCount(count);
+    } else {
+        _meshesCount++;
+    }
     auto primSchema = pxr::UsdGeomMesh::Define(_stage, path);
     primSchema.CreateExtentAttr().Set(extent);
     primSchema.CreateSubdivisionSchemeAttr().Set(pxr::UsdGeomTokens->none);
@@ -1729,7 +1738,12 @@ USDExporter::_exportMesh(pxr::SdfPath path,
     }
     index = 0;
     for (MeshSubset& meshSubset : meshSubsets) {
-        _geomSubsetsCount++;
+        if (_currentDataPoint) {
+            auto count = _currentDataPoint->GetGeomSubsetsCount();
+            _currentDataPoint->SetGeomSubsetsCount(1 + count);
+        } else {
+            _geomSubsetsCount++;
+        }
         std::string subsetName = subsetBaseName;
         if (index != 0) {
             subsetName += "_" + std::to_string(index);
@@ -1837,12 +1851,18 @@ USDExporter::_ExportEdges(const pxr::SdfPath parentPath,
     pxr::SdfPath path = parentPath.AppendChild(pxr::TfToken("Edges"));
     auto primSchema = pxr::UsdGeomBasisCurves::Define(_stage, path);
     primSchema.CreateExtentAttr().Set(extent);
-    primSchema.GetPrim().SetDocumentation("Edges not part of a Face");
     primSchema.CreateTypeAttr().Set(pxr::UsdGeomTokens->linear);
     primSchema.CreatePointsAttr().Set(_edgePoints);
     primSchema.SetWidthsInterpolation(pxr::UsdGeomTokens->constant);
     primSchema.CreateWidthsAttr().Set(widths);
     primSchema.CreateCurveVertexCountsAttr().Set(_edgeVertexCounts);
+    if (_currentDataPoint) {
+        auto count = _currentDataPoint->GetEdgesCount();
+        count += _edgeVertexCounts.size();
+        _currentDataPoint->SetEdgesCount(count);
+    } else {
+        _edgesCount += _edgeVertexCounts.size();
+    }
     _edgePoints.clear();
     _edgeVertexCounts.clear();
 }
@@ -1891,17 +1911,24 @@ USDExporter::_ExportCurves(const pxr::SdfPath parentPath,
     pxr::VtArray<float> widths(1);
     widths[0] = 1.0f;
     pxr::VtArray<pxr::GfVec3f> extent(2);
-    pxr::UsdGeomCurves::ComputeExtent(_edgePoints, widths, &extent);
+    pxr::UsdGeomCurves::ComputeExtent(_curvePoints, widths, &extent);
 
     pxr::SdfPath path = parentPath.AppendChild(pxr::TfToken("Curves"));
     auto primSchema = pxr::UsdGeomBasisCurves::Define(_stage, path);
     primSchema.CreateExtentAttr().Set(extent);
-    primSchema.GetPrim().SetDocumentation("Curves not part of a Face");
+    primSchema.GetPrim().SetDocumentation("Curves not associated with a face");
     primSchema.CreateTypeAttr().Set(pxr::UsdGeomTokens->linear);
     primSchema.SetWidthsInterpolation(pxr::UsdGeomTokens->constant);
     primSchema.CreateWidthsAttr().Set(widths);
     primSchema.CreatePointsAttr().Set(_curvePoints);
     primSchema.CreateCurveVertexCountsAttr().Set(_curveVertexCounts);
+    if (_currentDataPoint) {
+        auto count = _currentDataPoint->GetCurvesCount();
+        count += nCurves;
+        _currentDataPoint->SetCurvesCount(count);
+    } else {
+        _curvesCount += nCurves;
+    }
     _curvePoints.clear();
     _curveVertexCounts.clear();
 }
@@ -1962,17 +1989,23 @@ USDExporter::_ExportPolylines(const pxr::SdfPath parentPath,
     pxr::VtArray<float> widths(1);
     widths[0] = 1.0f;
     pxr::VtArray<pxr::GfVec3f> extent(2);
-    pxr::UsdGeomCurves::ComputeExtent(_edgePoints, widths, &extent);
+    pxr::UsdGeomCurves::ComputeExtent(_polylinePoints, widths, &extent);
 
     pxr::SdfPath path = parentPath.AppendChild(pxr::TfToken("Polylines"));
     auto primSchema = pxr::UsdGeomBasisCurves::Define(_stage, path);
     primSchema.CreateExtentAttr().Set(extent);
-    primSchema.GetPrim().SetDocumentation("Polylines not part of a Face");
     primSchema.CreateTypeAttr().Set(pxr::UsdGeomTokens->linear);
     primSchema.SetWidthsInterpolation(pxr::UsdGeomTokens->constant);
     primSchema.CreateWidthsAttr().Set(widths);
     primSchema.CreatePointsAttr().Set(_polylinePoints);
     primSchema.CreateCurveVertexCountsAttr().Set(_polylineVertexCounts);
+    if (_currentDataPoint) {
+        auto count = _currentDataPoint->GetLinesCount();
+        count += nPolylines;
+        _currentDataPoint->SetLinesCount(count);
+    } else {
+        _linesCount += nPolylines;
+    }
     _polylinePoints.clear();
     _polylineVertexCounts.clear();
 }
@@ -2318,7 +2351,7 @@ USDExporter::GetComponentInstanceCount() {
 
 unsigned long long
 USDExporter::GetMeshCount() {
-    return _meshCount;
+    return  _meshesCount;
 }
 
 unsigned long long
@@ -2350,6 +2383,17 @@ unsigned long long
 USDExporter::GetGeomSubsetsCount() {
     return _geomSubsetsCount;
 }
+
+unsigned long long
+USDExporter::GetOriginalFacesCount() {
+    return _originalFacesCount;
+}
+
+unsigned long long
+USDExporter::GetTrianglesCount() {
+    return _trianglesCount;
+}
+
 
 std::string
 USDExporter::GetExportTimeSummary() {

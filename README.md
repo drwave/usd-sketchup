@@ -16,7 +16,7 @@ There are also options on the export panel to conditionally export
 the USD as a **single file** or as a **set of files** that reference each
 other.
 
-The [**usdz**](https://graphics.pixar.com/usd/docs/Usdz-File-Format-Specification.html) files this exporter writes out takes care to write out in a way that is compatible with Apple's [ARKit 2](https://developer.apple.com/arkit/), which is more constrained than the general  [**usdz** specification](https://graphics.pixar.com/usd/docs/Usdz-File-Format-Specification.html), but that support can be toggled on or off programmatically.
+The [**usdz**](https://graphics.pixar.com/usd/docs/Usdz-File-Format-Specification.html) files this exporter writes out takes care to write out in a way that is compatible with Apple's [ARKit 2](https://developer.apple.com/arkit/), which is more constrained than the general  [**usdz** specification](https://graphics.pixar.com/usd/docs/Usdz-File-Format-Specification.html), but that support can be toggled on or off in the **Options...** dialog.
 
 The exporter also leverages the new [UsdPreviewSurface](https://graphics.pixar.com/usd/docs/UsdPreviewSurface-Proposal.html) to support texture export from SketchUp.
 
@@ -115,7 +115,7 @@ At the top level of the repository, make a link to the SketchUp SDK you installe
 > cd usd-sketchup
 > ln -s ~/SketchUpSDKs/SDK_Mac_18-0-18665 SDK_Mac
 ```
-#### 6. Build the USD SketchUp exporter
+#### 6. Build the USD SketchUp exporter plugin
 
 Launch Xcode on the [project file](https://github.com/drwave/usd-sketchup/tree/master/usd-sketchup.xcodeproj). You may need to fix up various things in the Xcode file that are specific to your build if you have changed them (i.e. installed USD in a different location, have a different version of SketchUp installed, etc.).
 
@@ -130,6 +130,10 @@ Initially, that directory will probably not be writable on your machine, so you 
 ```
 
 Copying the plug-in to the directory makes it very easy to debug the plug-in, as you can launch SketchUp Pro from inside of Xcode, set breakpoints in your plug-in, etc. Very handy when doing development.
+
+#### 6. Build the USD SketchUp exporter command line app
+
+Launch Xcode on the [project file](https://github.com/drwave/usd-sketchup/tree/master/usd-sketchup.xcodeproj). You may need to fix up various things in the Xcode file that are specific to your build if you have changed them (i.e. installed USD in a different location, have a different version of SketchUp installed, etc.).
 
 
 Contributing

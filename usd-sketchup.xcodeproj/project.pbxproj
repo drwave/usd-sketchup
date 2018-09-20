@@ -22,6 +22,10 @@
 		40E8C3122130833F00217059 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 40E8C3112130833F00217059 /* Cocoa.framework */; };
 		40E8C3142130835000217059 /* SketchUpAPI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 40E8C3132130835000217059 /* SketchUpAPI.framework */; };
 		40E8C322213091F900217059 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 40E8C321213091F900217059 /* README.md */; };
+		40F67EE92152CCFD00F0413F /* MeshSubset.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 40F67EE72152CCFD00F0413F /* MeshSubset.cpp */; };
+		40F67EEA2152CCFD00F0413F /* MeshSubset.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 40F67EE72152CCFD00F0413F /* MeshSubset.cpp */; };
+		40F67EED2152CF1B00F0413F /* StatsDataPoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 40F67EEB2152CF1B00F0413F /* StatsDataPoint.cpp */; };
+		40F67EEE2152CF1B00F0413F /* StatsDataPoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 40F67EEB2152CF1B00F0413F /* StatsDataPoint.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -37,6 +41,7 @@
 /* Begin PBXFileReference section */
 		4015BDF3213EE6190087C32C /* skp2usd */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = skp2usd; sourceTree = BUILT_PRODUCTS_DIR; };
 		4015BDF5213EE6190087C32C /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		402EFB672150719C0058FE62 /* UsingThePlugIn.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = UsingThePlugIn.md; sourceTree = "<group>"; };
 		4052B650212F6EAC002B6746 /* USDExporter.plugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = USDExporter.plugin; sourceTree = BUILT_PRODUCTS_DIR; };
 		4052B659212F6F70002B6746 /* USDExporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = USDExporter.h; sourceTree = "<group>"; };
 		4052B65A212F6F76002B6746 /* USDExporter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = USDExporter.cpp; sourceTree = "<group>"; };
@@ -52,6 +57,10 @@
 		40E8C3132130835000217059 /* SketchUpAPI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SketchUpAPI.framework; path = "../../SketchUpSDKs/SDK_Mac_18-0-18665/SketchUpAPI.framework"; sourceTree = "<group>"; };
 		40E8C3192130899400217059 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		40E8C321213091F900217059 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		40F67EE72152CCFD00F0413F /* MeshSubset.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MeshSubset.cpp; sourceTree = "<group>"; };
+		40F67EE82152CCFD00F0413F /* MeshSubset.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MeshSubset.h; sourceTree = "<group>"; };
+		40F67EEB2152CF1B00F0413F /* StatsDataPoint.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = StatsDataPoint.cpp; sourceTree = "<group>"; };
+		40F67EEC2152CF1B00F0413F /* StatsDataPoint.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = StatsDataPoint.h; sourceTree = "<group>"; };
 		8714F5772151605D00BF7E0F /* lib */ = {isa = PBXFileReference; lastKnownFileType = folder; path = lib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -90,6 +99,7 @@
 			isa = PBXGroup;
 			children = (
 				40E8C321213091F900217059 /* README.md */,
+				402EFB672150719C0058FE62 /* UsingThePlugIn.md */,
 				4052B652212F6EAC002B6746 /* usd-sketchup */,
 				4015BDF4213EE6190087C32C /* skp2usd */,
 				8714F5772151605D00BF7E0F /* lib */,
@@ -111,6 +121,10 @@
 			isa = PBXGroup;
 			children = (
 				40E8C3192130899400217059 /* Info.plist */,
+				40F67EEC2152CF1B00F0413F /* StatsDataPoint.h */,
+				40F67EEB2152CF1B00F0413F /* StatsDataPoint.cpp */,
+				40F67EE82152CCFD00F0413F /* MeshSubset.h */,
+				40F67EE72152CCFD00F0413F /* MeshSubset.cpp */,
 				4052B659212F6F70002B6746 /* USDExporter.h */,
 				4052B65A212F6F76002B6746 /* USDExporter.cpp */,
 				4052B669212F6F9D002B6746 /* USDSketchUpUtilities.h */,
@@ -320,9 +334,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				40F67EEA2152CCFD00F0413F /* MeshSubset.cpp in Sources */,
 				4015BDF6213EE6190087C32C /* main.cpp in Sources */,
 				4015BDFC213EE6EB0087C32C /* USDExporter.cpp in Sources */,
 				4015BDFD213EE6EE0087C32C /* USDSketchUpUtilities.cpp in Sources */,
+				40F67EEE2152CF1B00F0413F /* StatsDataPoint.cpp in Sources */,
 				4015BDFE213EE6F20087C32C /* USDTextureHelper.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -331,9 +347,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				40F67EE92152CCFD00F0413F /* MeshSubset.cpp in Sources */,
 				4052B66B212F6F9D002B6746 /* USDSketchUpUtilities.cpp in Sources */,
 				4052B65B212F6F76002B6746 /* USDExporter.cpp in Sources */,
 				4052B66A212F6F9D002B6746 /* USDTextureHelper.cpp in Sources */,
+				40F67EED2152CF1B00F0413F /* StatsDataPoint.cpp in Sources */,
 				4052B664212F6F81002B6746 /* SUToUSDPlugin.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

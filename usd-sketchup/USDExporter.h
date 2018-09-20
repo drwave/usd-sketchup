@@ -21,7 +21,7 @@
 // KIND, either express or implied. See the Apache License for the specific
 // language governing permissions and limitations under the Apache License.
 //
-//  USDExporter.hpp
+//  USDExporter.h
 //  skp2usd
 //
 //  Created by Michael B. Johnson on 11/22/17, based on previous work from 2015.
@@ -53,29 +53,8 @@
 #include "pxr/usd/usdShade/shader.h"
 #include "pxr/usd/usdShade/material.h"
 
-class MeshSubset {
-public:
-    MeshSubset(std::string materialTextureName,
-               pxr::GfVec3f rgb, float opacity,
-               pxr::VtArray<int> faceIndices);
-    ~MeshSubset();
-    //MeshSubset(const MeshSubset&) = delete;
-    
-    const std::string GetMaterialTextureName();
-    const pxr::GfVec3f GetRGB();
-    const float GetOpacity();
-    const pxr::VtArray<int> GetFaceIndices();
-    pxr::SdfPath GetMaterialPath();
-    void SetMaterialPath(pxr::SdfPath path);
-    
-private:
-    std::string _materialTextureName;
-    pxr::VtArray<int> _faceIndices;
-    pxr::SdfPath _materialPath;
-    pxr::GfVec3f _rgb;
-    float _opacity;
-};
-
+#include "MeshSubset.h"
+#include "StatsDataPoint.h"
 
 class USDExporter {
 
@@ -123,6 +102,7 @@ public:
     void SetStartFrame(double frame);
     void SetFrameIncrement(double frame);
 
+    // accessors for export summary 
     unsigned long long GetComponentDefinitionCount();
     unsigned long long GetComponentInstanceCount();
     unsigned long long GetMeshCount();
@@ -132,6 +112,8 @@ public:
     unsigned long long GetCamerasCount();
     unsigned long long GetMaterialsCount();
     unsigned long long GetGeomSubsetsCount();
+    unsigned long long GetOriginalFacesCount();
+    unsigned long long GetTrianglesCount();
     std::string GetExportTimeSummary();
 
 private:
@@ -146,13 +128,17 @@ private:
     SketchUpPluginProgressCallback* _progressCallback;
     unsigned long long _componentDefinitionCount;
     unsigned long long _componentInstanceCount;
-    unsigned long long _meshCount;
+    StatsDataPoint* _currentDataPoint;
+    unsigned long long _meshesCount;
     unsigned long long _edgesCount;
     unsigned long long _linesCount;
     unsigned long long _curvesCount;
     unsigned long long _camerasCount;
     unsigned long long _materialsCount;
+    unsigned long long _shadersCount;
     unsigned long long _geomSubsetsCount;
+    unsigned long long _originalFacesCount;
+    unsigned long long _trianglesCount;
     std::string _exportTimeSummary;
 
     bool _exportNormals;
@@ -186,8 +172,9 @@ private:
     std::map<std::string, std::string> _textureNameSafeNameMap;
     std::map<std::string, std::string> _originalComponentNameSafeNameDictionary;
     std::map<std::string, int> _instanceCountPerClass;
-    std::vector<SUComponentInstanceRef> instances; // wave: this should start with _, right?
-   
+    //std::vector<SUComponentInstanceRef> instances; // wave: this should start with _, right?
+    std::map<pxr::SdfPath, StatsDataPoint*> _componentMasterStats;
+
     pxr::VtArray<pxr::GfVec3f> _points;
     pxr::VtArray<pxr::GfVec3f> _vertexNormals;
     pxr::VtArray<pxr::GfVec3f> _vertexFlippedNormals;
@@ -285,7 +272,7 @@ private:
     bool _foundAFrontTexture;
     bool _foundABackTexture;
     SUMaterialRef _groupMaterial;
-    void _incrementCountForPath(pxr::SdfPath path);
+    void _incrementCountForMaterialPath(pxr::SdfPath path);
     void _exportRGBAShader(const pxr::SdfPath path,
                            pxr::UsdShadeOutput materialSurface,
                            pxr::GfVec3f rgb, float opacity);

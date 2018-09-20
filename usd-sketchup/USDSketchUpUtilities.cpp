@@ -417,6 +417,19 @@ USDExporterPlugin::_updateSummaryFromExporter(USDExporter& exporter) {
         } else {
             ss << " Meshes\n";
         }
+        unsigned long long faces = exporter.GetOriginalFacesCount();
+        unsigned long long tris = exporter.GetTrianglesCount();
+        ss << std::string("\t") << tris;
+        if (tris == 1) {
+            ss << " Triangle from " << faces;
+        } else {
+            ss << " Triangles from " << faces;
+        }
+        if (faces == 1) {
+            ss << " Face\n";
+        } else {
+            ss << " Faces\n";
+        }
     }
     count = exporter.GetMaterialsCount();
     if (count) {
@@ -429,7 +442,7 @@ USDExporterPlugin::_updateSummaryFromExporter(USDExporter& exporter) {
     }
     count = exporter.GetGeomSubsetsCount();
     if (count) {
-        ss << std::string("\tExported ") << count;
+        ss << std::string("\t") << count;
         if (count == 1) {
             ss << " GeomSubset\n";
         } else {
