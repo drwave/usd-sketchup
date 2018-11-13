@@ -106,7 +106,7 @@ static InitUSDPluginPath getUSDPlugInPathSet;
 
 #pragma mark USDExporter class:
 
-USDExporter::USDExporter(): _model(SU_INVALID), _textureWriter(SU_INVALID) {
+USDExporter::USDExporter(): _model(SU_INVALID), _textureWriter(SU_INVALID), _currentDataPoint(NULL) {
     SUInitialize();
     SU_CALL(SUTextureWriterCreate(&_textureWriter));
     SetExportMeshes(true);
@@ -159,6 +159,7 @@ USDExporter::_performExport(const std::string& skpSrc,
     // used by the summary text presented to the user at the end of the export.
     _componentDefinitionCount = 0;
     _componentInstanceCount = 0;
+    _currentDataPoint = NULL; // set in initializer, but here as well for clarity
      _meshesCount = 0;
     _edgesCount = 0;
     _linesCount = 0;
