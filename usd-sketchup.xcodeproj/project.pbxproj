@@ -545,8 +545,13 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = QS29RJP6TK;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/lib/SDK_Mac/SketchUpAPI.framework/Headers",
+					"$(PROJECT_DIR)/lib/USD/include",
+				);
 				INFOPLIST_FILE = "usd-sketchup/Info.plist";
 				INSTALL_PATH = "\"/Applications/SketchUp\\ 2018/SketchUp.app/Contents/PlugIns/\"";
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/lib/USD/lib";
 				OTHER_LDFLAGS = "-headerpad_max_install_names";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.sketchup.exporters.usd-sketchup";
 				PRODUCT_NAME = USDExporter;
@@ -563,8 +568,13 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = QS29RJP6TK;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/lib/SDK_Mac/SketchUpAPI.framework/Headers",
+					"$(PROJECT_DIR)/lib/USD/include",
+				);
 				INFOPLIST_FILE = "usd-sketchup/Info.plist";
 				INSTALL_PATH = "\"/Applications/SketchUp\\ 2018/SketchUp.app/Contents/PlugIns/\"";
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/lib/USD/lib";
 				OTHER_LDFLAGS = "-headerpad_max_install_names";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.sketchup.exporters.usd-sketchup";
 				PRODUCT_NAME = USDExporter;
