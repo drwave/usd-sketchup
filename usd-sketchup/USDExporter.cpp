@@ -1299,6 +1299,9 @@ USDExporter::_ExportFaces(const pxr::SdfPath parentPath,
     // faces generates two triangles, each of which is a separate face to USD
     // Note that as of USD 18.09 Hydra does not currently render GeomSubsets,
     // but SceneKit on iOS 12 and macOS Mojave does.
+    // If all of the faces of a given mesh are used in a subset, there's no reason
+    // to subset it, right?
+    // wave: come back here
     for (size_t i = 0; i < num; i++) {
         pxr::VtArray<int> currentFaceIndices;
         size_t faceCount = _gatherFaceInfo(parentPath, faces[i]);
