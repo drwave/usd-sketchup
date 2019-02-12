@@ -516,7 +516,7 @@ USDExporter::_FinalizeComponentDefinitions() {
         // modifications to the stage that have these component definitions.
         prim.SetSpecifier(pxr::SdfSpecifierOver);
     }
-    if (!GetExportToSingleFile()) {
+    if (!GetExportToSingleFile() && _componentDefinitionPaths.size()) {
         _componentDefinitionStage->Save();
     }
 }
