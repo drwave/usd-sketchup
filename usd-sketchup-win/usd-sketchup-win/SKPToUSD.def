@@ -1,0 +1,6 @@
+; SKPToUSD.def : Declares the module parameters.
+
+LIBRARY      "skp2usd.dll"
+
+EXPORTS
+  GetSketchUpModelExporterInterface
