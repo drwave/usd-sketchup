@@ -1781,7 +1781,7 @@ USDExporter::_exportMesh(pxr::SdfPath path,
         index++;
         pxr::SdfPath subsetPath = path.AppendChild(pxr::TfToken(subsetName));
         auto subset = pxr::UsdGeomSubset::CreateGeomSubset(primSchema,
-                                                           subsetName,
+                                                           pxr::TfToken(subsetName),
                                                            pxr::UsdGeomTokens->face,
                                                            meshSubset.GetFaceIndices(),
                                                            bindName,
