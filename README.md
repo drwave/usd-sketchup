@@ -40,6 +40,8 @@ sudo cp -rf USDExporter.plugin /Applications/SketchUp\ 2018/SketchUp.app/Content
 Once you have copied it there, you should see the 3 USD export options
 under the **File**->**Export**->**3D Model** menu.
 
+This build has been (lightly) tested on SketchUp 2019 (Version
+19.2.221) on macOS 10.14.6, and was built with Xcode 10.3 (10G8)
 
 Getting Help
 ------------
