@@ -70,11 +70,6 @@ main(int argc, const char * argv[]) {
     const std::string skpFile = std::string(argv[1]);
     const std::string usdFile = std::string(argv[2]);
 
-    while ((c = getopt (argc, argv, "abc:")) != -1)
-        switch (c)
-    {
-        case 'a':
-
     // these are the same defaults as the plug-in
     // we might want to have these returned in a JSON dict or something
     // so if they changed, we could just call a function to get them.
