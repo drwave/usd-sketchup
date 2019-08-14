@@ -1,0 +1,18 @@
+Sketchup Plugin Dependencies
+*Visual Studio 2019
+    *MFC 142 BuildTools x86x64
+    *ATL 142 BuildTools x86x64
+*USD 19.07 or higer
+*SketchupSDK 2019-0-753_0 or higher
+
+Build Arguments
+*python USD/build_scripts/build_usd.py --build-args TBB,extra_inc=big_iron.inc --no-python --no-imaging --no-usdview --build-monolithic "C:\Program Files\USD"
+
+Add to system PATH
+*USD for sketchup "bin","include" and "lib"
+*Sketchup SDK "headers" and "binaries" for sketchup api
+
+Visual Studio 2019 Linker Setup
+*usd_ms.lib
+*sketchup.lib
+*SketchUpAPI.lib
